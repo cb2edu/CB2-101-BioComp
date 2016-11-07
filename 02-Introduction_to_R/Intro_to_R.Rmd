@@ -1,0 +1,592 @@
+---
+title: 'CB2-101: R introduction'
+author: "Malay (malay@uab.edu)"
+date: "November 7, 2016"
+output:
+  pdf_document:
+    fig_height: 3.5
+    fig_width: 5
+    latex_engine: xelatex
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+---
+
+# History of R
+R is the *lingua franca* of statistical software. It is a dialect of S, a computer language developed by John Chambers in 1976 at Bell Labs. In 1988, the system was rewritten in C. The software changed hand frequently, until in 1993, R appeared in the scene. It was a *free* implementation of S, written by Ross Ihaka and Robert Gentleman at the University of Auckland, New Zealand.  
+
+
+
+
+# Starting R
+If you're in command-line environment you can start `R` by typing the command `R`. In our example will will use a far nicer environment called RStudio. It is available from: <https://www.rstudio.com/>.
+
+
+
+# R environment
+
+1. `getwd()`
+:	Get the current directory
+2. `setwd()`
+:	Set the current directory
+3. `ls()`
+:	Lists the objects created.
+4. `rm()`
+:	Will remove objects.	
+4. `list.files()` or `dir()`
+:	List the files in the current directory
+5. `source()`
+:	Reads a R file 
+
+## Exercise
+
+Create a file called `source_test.R` to have the following code. 
+
+```{r}
+myfunction <- function () {
+	x <- rnorm(100)
+	mean(x)
+} 
+
+myfunction()
+```
+Type `source("source_test.R")` in the R console. Type `ls()`, you'll see the object `myfunction` has been created in the workspace. You can also run the script from the command line.
+
+```{r engine='bash'}
+Rscript source_test.R
+```
+
+# Getting help
+1. `CRAN` - The Comprehensive R Archive Network (<http://cran.r-project.org/>). About ~4000 packages and data available for use. 
+2. R website (<http://www.r-project.org/>) and FAQs (<http://cran.r-project.org/doc/FAQ/R-FAQ.html>)
+3. R related projects are difficult to search using Google. Use  R-specific search engine RSEEK (<http://www.rseek.org/>).
+4. A very good guide to R is "R Inferno" (<http://www.burns-stat.com/pages/Tutor/R_inferno.pdf>).
+5. Hadley Wickham's "Advanced R" (<http://adv-r.had.co.nz/>).
+
+
+## Some useful online documentation
+
+1. An introduction to R (<http://cran.r-project.org/doc/manuals/r-release/R-intro.pdf>)
+2. R Data Import/Export (<http://cran.r-project.org/doc/manuals/r-release/R-data.pdf>)
+
+A full list of such manuals can be found at <http://cran.r-project.org/manuals.html>. 
+
+
+## Finding help inside R
+1. `help(object)` will show the help page of any object including function in R.
+2. `?object` is same thing as above.
+3. `help.search("string")` will search for a string pattern in all help files.
+4. `??string` is the same thing as above
+5. `help(package="packagename")` will show the start help page of a package.
+
+
+## R for bioinformatics
+
+1. Bioconductor project <http://www.bioconductor.org/>
+:	A set of R modules specifically meant for biological data analysis. Distributed separately from CRAN.
+2. Some biological data related module in CRAN, such as [`ape`](http://cran.r-project.org/web/packages/ape/index.html), a phylogenetic analysis package. Or, [`seqinr`](http://cran.r-project.org/web/packages/seqinr/index.html), a basic sequence analysis package. A brief introduction to using R for bioinformatics can be found [here](http://cran.r-project.org/doc/contrib/Krijnen-IntroBioInfStatistics.pdf).
+
+# Installing packages in R
+`install.packages('Packagename')` will install any package in R. To use the package you need to use `library('Packagename')`.
+
+# Assignment
+Assignment operator in R is `<-`.
+
+```{r}
+x<- 1:20
+x
+```
+
+
+# Basic data types in R
+1. character
+2. numeric
+	All numbers in R are double precision real numbers. If you want an integer, you need to specify `L` suffix. `1` is `numeric`, but `1L` is integer.
+3. integer
+4. complex
+5. logical (True/False)
+
+Undefined data in R is represented as either 'NaN' or 'NA' types. Infinity is represented as `Inf`.
+
+# R data structures
+
+## Vectors and List
+1. A `array` like objects. Vector contains only one type of objects.
+2. A list can contain various data types.
+3. Empty vector can be created using `vector()` function.
+4. Empty list can be created using `list()` function.
+5. Properties are `attributes()`, `class()`, `length()`.
+6. Individual elements can be *concatenated* using `c()` function.
+7. Can be converted to other data types using `as.x()` functions.
+
+```{r}
+x <- 0:6
+as.numeric(x)
+as.logical(x)
+as.character(x)
+as.complex(x)
+```
+
+## Matrix
+Special type of vector with "dimension" attributes. 
+
+```{r}
+m<-matrix (nrow=2, ncol=3)
+dim(m)
+attributes(m)
+```
+
+Matrix is constructed column-wise.
+
+```{r}
+m<-matrix(1:6, nrow=2, ncol=3)
+m
+m <- 1:10
+dim(m)<-c(2,5)
+m
+```
+
+You can create matrix out of vectors using column-binding or row-binding:
+
+```{r}
+x<- 1:3
+y <- 10:12
+cbind(x,y)
+rbind(x,y)
+```
+
+## Factor
+Categorical data. Can be ordered or unordered.
+
+```{r}
+x<- factor (c("yes","yes", "no"))
+```
+
+Factors have levels:
+
+```{r}
+table(x)
+```
+Factors are basically numerical data under the hood. Each string is given a number. We can view the underlying assignment using this:
+
+```{r}
+unclass(x)
+```
+
+Explicit ordering can be specified using  `levels` arguments to `factor`. If we want to make `no` before `yes`:
+
+```{r}
+x<- factor (c("yes", "no"), levels=c("Yes","no"))
+```
+
+## Missing values
+Undefined values in R are represented by `"NaN"` and `"NA"`. NA values can have class of numeric, integer, etc. NaN is also NA but the converse is not true. There are two functions to find `NaN` and `NA` is R:
+
+```
+is.na()
+is.nan()
+```
+```{r}
+x<- c(1,2, NA, 10, 3)
+is.na(x)
+is.nan(x)
+x<- c(1,2,NaN,NA,4)
+is.na(x)
+is.nan(x)
+```
+
+## Data frames
+Key data type in R.  It stores tabular data. Column of a data frame can have different types of data, unlike matrix (same type). Special attributes `row.names`. To read use `read.table()` or `read.csv()`. Data frame can be converted to matrix `data.matrix()`.
+
+```{r}
+x <-data.frame (foo=1:4, bar=c(T,T,F,F))
+x
+nrow(x)
+ncol(x)
+```
+
+### Reading and writing data-frame
+
+```{r}
+data(iris) # Read iris data sets
+head(iris) # View the first few line of the iris data
+write.table(iris,"iris.txt",quote=F) # Write a sample file out
+dir() # Check that we have written a file
+test_data<-read.table("iris.txt", header=T) # read the data back into test_data
+head(test_data) # Check the first few lines of the data
+```
+To read a data frame from a gzipped file:
+```{r eval=FALSE}
+d<-read.table(gzfile("myzipped.gz"))
+```
+
+# Names
+
+Each type of of data in R can have names. But they are most important for Matrix and Data-frames. 
+
+```{r}
+m<- matrix(1:4, nrow=2, ncol=2)
+dimnames(m) <- list (c("a","b"), c("c","d"))
+m
+d<-data.frame(c(1,2,3),c(4,5,6))
+d
+names(d)<- c("A","B")
+d
+```
+
+# Subsetting
+Subsetting is a way to select a subset of data. There are 3 basic ways to subset data in R:
+
+1. `[]`
+2. `[[]]`
+3. `$`
+
+## Subsetting vector
+```{r}
+x<-c ("a","b", "c")
+x[1]
+x[2]
+x[1:3]
+x[-2]
+
+x[x > "a"]
+u <- x > "a"
+u
+x[u]
+```
+
+## Subsetting list
+```{r}
+x <- list (foo=1:4, bar=0.6)
+x[1]
+x[[1]]
+x$bar
+x[["bar"]]
+x["bar"]
+```
+## Removing missing values
+```{r}
+x <- c(1,2, NA, 4, NA, 5)
+bad <- is.na(x)
+x[!bad]
+```
+
+## Matrix subsetting
+
+```{r}
+x<- matrix (1:6, 2, 3) # Create a sample 2x3 matrix
+x # print the matrix out
+x[1,2] # what is the value in row 1, column 2
+x[2,1] # what is the value in row 2, column 1
+```
+
+We can select the whole row or columns:
+
+```{r}
+x[1,] # select whole row 1
+x[,2] # select whole column 2
+```
+
+## Subsetting data-frame
+All the operations of matrix also work with data-frame. However, you will more often use `$` to extract individual columns of a data-frame.
+
+```{r}
+x<-data.frame(c(1:3),c(4:6)) # create a small data frame
+names(x)<-c("A","B") # Give each column a nice name
+x
+x$A # Extract the column A
+```
+
+# Vectorized operations
+Instead of using loops, you should all the time try to use "vectorized" operations. That means if you are interested in operations performed on each element of a "collection", you should use the collection as a whole, not individual elements. This gives the computer to parallelize the operation and usually results in faster runtime.
+
+```{r}
+x<-1:4; y<-6:9
+x+y
+x-y
+x*y
+x/y
+```
+When you multiply two matrices using the `"*"`, it multiplies element by element multiplications. This is different that standard matrix multiplication. If you are interested standard matrix multiplication, use `"%*%"` operator.
+
+```{r}
+m1<-matrix(1:4,2,2)
+m1
+m1*m1
+m1 %*% m1
+```
+# Some programming concepts in R
+
+## Functions
+```{r fig.cap=""}
+myfunction<-function() {
+	cat("Hello world\n");	
+}
+```
+## For loop and if condition
+```{r fig.cap=""}
+for (i in 1:3) {
+	if (i > 1) {
+		cat("I said hello", i, "times\n")
+	}else {
+		cat("I said hello", i, "time\n")
+	}
+}
+```
+
+# Summary statistics
+```{r}
+x<-rnorm(50)
+mean(x)
+sd(x)
+var(x)
+median(x)
+sum(x)
+```
+
+You need to skip `NA` for doing summary statistics:
+```{r}
+data(airquality)
+mean(airquality$Ozone)
+mean(airquality$Ozone,na.rm=T)
+```
+`summary()` will give you a nice summary of data:
+```{r}
+summary(airquality)
+```
+
+# Random numbers
+We can generate random numbers from the normal distribution using `rnorm()` function.
+
+```{r}
+x<- rnorm(10)
+x
+```
+If we are interested in generating random numbers using a particular mean and standard deviation, we should you this:
+
+```{r}
+x<-rnorm(10, mean=5, sd=2)
+x
+```
+In R, you can sample other distributions, I will leave it up to you to explore.
+
+# Plotting in R
+
+There are 3 graphical libraries in R:
+
+1. Base graphics
+2. Lattice
+3. `gglplot2()`
+
+In this tutorial we will discuss only base graphics.
+
+## `Plot`
+`plot` function is pretty intelligent. If you just give a dataframe, it will plot a graph with all vs all variables.
+
+```{r fig.show='asis', fig.cap=""}
+data(iris)
+plot(iris)
+```
+
+```{r fig.show='asis',fig.cap=""}
+x<-runif(50,0,2) # create a vector from uniform distribution
+y<-runif (50,0,2) # create another one
+plot(x,y, main="Main title",sub="subtitle",xlab="x-label", ylab="y-label")
+abline(h=0.6,v=0.6)
+
+```
+Each side of the plot have specific margins.
+```{r fig.cap="",fig.show='asis'}
+plot(1,1)
+for (side in 0:3) mtext (0:3,side=side,at=0.7,line=0:3)
+mtext(paste("side",1:4),side=1:4,line = -1, font=2)
+```
+
+### Building a plot from pieces
+
+```{r fig.cap="",fig.show='asis'}
+plot (x, y, type="n", xlab="",ylab="", axes=F) # Draw an empty plot area
+points(x,y) # Draw point
+axis(1) # Draw the first axis
+axis(2, at=seq(0.2,1.8,0.2)) # Draw second axis with tick at specific scale
+box() # Draw the surrounding box
+title(main="Main title",xlab="x",ylab="y") # Write the main title and the labels
+legend("topleft",legend="Some random data",pch=16)
+```
+
+### Plotting characters
+`pchShow()` will show you all the plotting characters.
+
+## Drawing devices in R
+Normally when you create a plot, it is drawn on the default computer screen. But you can create all sorts of images, such PDF (good for high resolution publication quality graphs), or bitmap images such as PNG. In all cases, the steps are identical. You open a device, draw your plot and close the device. For e.g., you can create a PDF drawing like this.
+
+```{r fig.cap=""}
+data(airquality)
+pdf("airquality.pdf",width=8.5,height=11)
+plot(airquality)
+dev.off()
+```
+
+## `par`
+`par` function controls every parameter of a plot. The function has several parameters. But the most common ones are as follows:
+
+1. `pch`- point type used for plotting
+2. `lty` - Line type
+3. `lwd` - line width
+4. `cex` - character magnification. It has several variations for different regions of the plot.
+5. `las` - rotation of the axis labels
+6. `bg` - background color of the plot
+7. `mar` - margin of the plot
+8. `oma` - outer margin of the plot
+9. `mfrow` - draws multiple plots
+
+## Drawing multiplots
+You can modify `mfrow` in `par()`. For e.g, to draw a 1 row two column plot,
+
+```{r fig.cap=""}
+data(airquality)
+par(mfrow=c(1,2))
+with(airquality, {plot(Wind,Ozone);plot(Temp,Wind)})
+```
+
+
+## Histograms
+
+```{r fig.cap="", fig.show='asis'}
+data("airquality")
+hist(airquality$Ozone)
+```
+No of breaks in the histogram can be controlled:
+```{r fig.cap="",fig.show='asis'}
+hist(airquality$Ozone, breaks=50)
+```
+
+## Boxplots
+Boxplot is an summary plot showing the median and the distributions of data. You can give it a data frame.
+
+```{r fig.cap="", fig.show='asis'}
+boxplot(airquality)
+```
+
+## Barplots
+
+```{r fig.cap="", fig.show="asis"}
+data(mtcars)
+head(mtcars)
+counts<-table(mtcars$gear)
+barplot(counts, main="Car number of gear distribution", xlab="Number of gears")
+```
+
+
+You can make a horizontal bar plot. 
+
+```{r fig.cap="", fig.show="asis"}
+barplot(counts, main="Car distribution", horiz=T, names.arg=c("3 Gears", "4 Gears", "5 Gears"))
+```
+
+
+You can draw a grouped bar plot like this.
+```{r fig.cap="", fig.show='asis'}
+counts<-table(mtcars$cyl, mtcars$gear)
+barplot(counts, main="Gear and cylinder", 
+		xlab="Number of gears", 
+		col=c("black","grey","white"),
+		legend=rownames(counts),beside=T)
+```
+
+## Barplots with error bars
+There is no inbuilt way to generate error bars in R. But we have to hack a solution. We will use arrows to generate error bars. The trick is arrows take an argument of `angle`. If you give `angle=90` it will generate an error bar.
+
+```{r fig.cap="",fig.show='asis'}
+## Generate some data
+heights<-vector() # Empty vector to hold the heights of the bar plot
+stddevs<-vector() # Empty vector to hold the standard deviations
+
+for (i in 1:3) {  # We will generate 3 sets of data
+	d<-rnorm(10, mean=5, sd =1) # Be sure that we have some positive data
+	heights[i]<-mean(d)
+	stddevs[i]<-sd(d)
+} 
+
+## Draw the barplot
+bp<-barplot(heights,names=c(1:3),ylim=c(0,8),space=1) # Returns a matrix
+mids<-bp[,1] # Get the midpoint
+
+for (i in 1:3) { # We will draw the errorbars 
+	arrows(x0=mids[i],y0=heights[i]-stddevs[i],
+		   x1=mids[i],y1=heights[i]+stddevs[i],
+		   code=3,angle=90)
+}
+
+```
+
+# Colors in R
+If you have drawn figures in Excel, you might have used colors like this
+
+```{r}
+barplot(counts, main="Gear and cylinder", xlab="Number of gears", col=c("red","green","blue"),legend=rownames(counts),beside=T)
+```
+This is what I call "Christmas" plot. You should never use color like this. In R you can use sophisticated color palette. 
+
+```{r fig.cap=""}
+library(RColorBrewer)
+display.brewer.all()
+```
+There are 3 palettes: sequential, quantitative, and contrasting. Now choose a nice color for our plot.
+
+```{r fig.cap=""}
+nice<-brewer.pal(3,"Pastel2")
+barplot(counts, main="Gear and cylinder", xlab="Number of gears", col=nice,legend=rownames(counts),beside=T)
+```
+
+# Linear regression and correlation
+
+## Linear regression
+We will use the `women` datasets in R for this example. These is a simple datasets with "weight" and "height" of women in the US.
+```{r fig.cap=""}
+data(women)
+head(women)
+```
+If we plot a simple scatterplot of this data, we will see there is an obvious correlation between this two variables.
+```{r fig.cap=""}
+plot(women)
+```
+Let's do a linear regression between this two variables.
+```{r fig.cap=""}
+l <- lm(women$weight~women$height)
+summary(l)
+```
+You can safely ignore the `(Intercept)` line. But the adjusted r^2^ is 0.99 with P-value 1.1e-14, which is highly significant. Let's put the regression line on the plot.
+```{r fig.cap=""}
+plot(women$height,women$weight,main="Women height vs weight",xlab="Height",ylab="Weight")
+abline(l,lwd=2,col="red")
+```
+You can extract the P-value and the r^2^ values for printing
+```{r fig.cap=""}
+s<-summary(l)
+s$adj.r.squared
+s$coefficients[2,4]
+```
+## Correlations
+We can also do a correlation between this two variables
+
+```{r fig.cap=""}
+s<-cor.test(women$weight,women$height,alternatives="tow.sided")
+s
+s$p.value
+s$estimate
+```
+* * * *
+
+
+
+
+
+
+
+
+
+
+
+
+
