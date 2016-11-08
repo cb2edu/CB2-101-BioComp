@@ -110,14 +110,40 @@ Undefined data in R is represented as either 'NaN' or 'NA' types. Infinity is re
 
 # R data structures
 
-## Vectors and List
-1. A `array` like objects. Vector contains only one type of objects.
-2. A list can contain various data types.
-3. Empty vector can be created using `vector()` function.
-4. Empty list can be created using `list()` function.
-5. Properties are `attributes()`, `class()`, `length()`.
-6. Individual elements can be *concatenated* using `c()` function.
-7. Can be converted to other data types using `as.x()` functions.
+## Vectors
+1. Basic data structures in R.
+2. All elements are of same type.
+3. **`typeof()`** returns data-type. 
+4. **`length()`** returns the number of elements.
+
+### Creating vectors
+```{r}
+x <- vector() 		# Empty vector
+x <- c(1,2,3,4) 	# Using c()
+x <- 1:10 			# Using ":" operator
+x <- seq(1,10,by=1) # Using seq() funtion
+```
+
+### Accessing elements of a vector
+Elements of vector in R starts with 1, rather than 0 like in other langauges.
+
+```{r}
+x
+x[3] 	# Access the 3rd element
+x[-1] 	# Access everything except the first element
+```
+
+### Modify vector
+```{r}
+x
+x[2] <- 0; x 		# Modify 2nd element
+x[x > 5] <- 1; x    # Modify elements greater than 5
+x <- c(1,2); y <- c(2,4)
+z <- c(x,y)         # Joining two vectors
+z
+```
+### Converting vector of one type to another
+Use `as.x()` funtions.
 
 ```{r}
 x <- 0:6
@@ -125,6 +151,31 @@ as.numeric(x)
 as.logical(x)
 as.character(x)
 as.complex(x)
+```
+
+## Lists
+1. Contains mixed data type.
+2. `typeof()` returns "list".
+3. `length()` returns length.
+
+### Creating list
+```{r}
+x <- list() # Empty list
+x <- list ("a" = 2.5, "b" = TRUE, "c" = 1:3) # Mixed type list
+x
+typeof(x)
+length(x)
+```
+### Access elements of a list
+```{r}
+x$a      # Access using name
+x[c(1:2)] # Using index
+x[["b"]]  # Using name
+```
+
+### Modify lists
+```{r}
+x[["d"]] <- 25
 ```
 
 ## Matrix
@@ -332,6 +383,33 @@ for (i in 1:3) {
 		cat("I said hello", i, "time\n")
 	}
 }
+```
+
+## Reading a file line by line in R
+```{r eval=FALSE}
+fh <- file( inputfile, open="r" )
+while (length( line <- readLines( fh, n=1, warn= FALSE ) ) > 0) {
+	# Do something with the line
+}
+close(fh)
+```
+
+## Regular expression in R
+Some useful functions that can be used with regular expression:
+
+1. `grep()` finds a pattern in a vector or character.
+2. `sub()` substitute a text for the first occurance.
+3. `gsub()` substitute every occurance.
+4. `regexpr()` find and extracts values using a pattern.
+5. `regexec()` find and extracts values. Usefule for the function `regmatches()`
+
+```{r}
+text <- "gi|123456|ref|ABCDEFG" # Text to search
+p <- "gi\\|(\\d+)\\|ref\\|(\\S+)" # Extract gi and acc
+m <- regexec(p, text, perl = TRUE) # Find match and extract
+s <- regmatches(text, m) # Extract the substring
+s[[1]][2] # Print GI
+s[[1]][3] # Print accession
 ```
 
 # Summary statistics
