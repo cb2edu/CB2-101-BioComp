@@ -1,0 +1,263 @@
+---
+title: "CB2-101: Sequence Similarity Search"
+author: "Malay (malay@uab.edu)"
+date: "Nov 11, 2016"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: yes
+    toc: yes
+---
+
+# Simple BLAST
+
+BLAST p53 human sequence against SwissProt database.
+
+## Download sequence files
+
+Download SwissProt FASTA file file:
+
+```{r eval=FALSE, engine='bash'}
+wget ftp://ftp.uniprot.org/pub/databases/uniprot/knowledgebase/uniprot_sprot.fasta.gz
+```
+
+Find the id of P53 using the Uniprot API.
+
+```{r eval=FALSE, engine='bash'}
+wget http://www.uniprot.org/uniprot/?query=organism:9606+AND+gene:P53&format=tab&columns=id
+```
+The first id is `P04637` is the actual id of `P53_HUMAN`.
+
+## Exercize
+Write a script to extract  sequence by id from a FASTA file and use it to extract p53 sequence from SwissProt FASTA file.
+
+## Create the BLAST datbase and run BLASTP
+
+```{r engine='bash',eval=FALSE}
+formatdb -i uniprot_sprot.fasta
+blastall -p blastp -i uniprot_sprot.fasta -o output.bla 
+```
+
+## Download blast
+BLAST has new C++ version called ```blast+```. But we will stick with the older version.
+
+Download the BLAST executable from NCBI FTP site:
+
+ftp://ftp.ncbi.nlm.nih.gov/blast/executables/release/2.2.26/
+
+Edit your ```~/.bashrc``` to put the executable on your path. You also may need to create a ```.ncbirc``` depending of the version of the BLAST. For version 2.2.26 you really do not need to create one.
+
+
+# Advance BLAST
+**Homologs** are sequences that are related by descent. **Orthologs** are homologs present in two separate species. This does not assume that two homologs are similar in sequence. However, it's a common practice to find orthologs using sequence similarity. 
+
+One of the simple ways to find orthologs of a protein from one species in another is to find the protein's **best hit** in the second species and consider the hit as ortholog only when the the hit itself also has the starting protein as the best hit. This relationship is called "Reciprocal Best BLAST hit" or RBH.
+
+We will use RBH to determine all the orthologs between _Saccharomyces cerevisiae_ and _Schizosaccharomyces pombe_. This requires all proteins in this two genomes to be searched against all other proteins. This type of BLAST searches are commonly called **all vs all** BLAST.
+
+
+
+## Downloading and preparing the input files
+First let's create the SC proteome file.
+
+```{r engine='bash', cache=TRUE, eval=FALSE}
+# Create a directory for SC
+mkdir -p SC
+
+# Change to that directory
+cd SC
+
+# Download all the files of SC from NCBI
+wget --quiet ftp://ftp.ncbi.nih.gov/genomes/Fungi/Saccharomyces_cerevisiae_uid128/*.faa
+
+# Combine all the .faa files into one file
+cat *.faa >sc.fas
+
+# We no longer need the .faa files
+rm -rf *.faa
+
+# Compress the file
+bzip2 -9 sc.fas
+
+```
+
+
+Then we will create the SP proteome file
+
+
+```{r engine='bash', cache=TRUE, eval=FALSE}
+mkdir -p SP
+cd SP
+wget --quiet ftp://ftp.ncbi.nih.gov/genomes/Fungi/Schizosaccharomyces_pombe_uid127/*.faa
+cat *.faa >sp.fas
+rm -rf *.faa
+bzip2 -9 sp.fas
+```
+
+
+
+
+## Formatting the BLAST database
+
+For searching a sequence against a database, BLAST requires the database to be formatted in a specific way. There are some pre-formatted databases available from the FTP site:
+
+ftp://ftp.ncbi.nlm.nih.gov/blast/db/
+
+However, in our case, we need to format our own database. First we will combine the two genomes into one file.
+
+```{r engine='bash',eval=FALSE}
+bzcat *.bz2 | bzip2 -c >all.fas.bz2
+```
+
+The software that formats a fasta file searchable by BLAST is called ```formatdb```. You can view the full list of options by running:
+
+```{.bash, eval=FALSE}
+formatdb -
+```
+
+You can simply run ```formatdb``` using the following command
+
+```{r engine='bash',eval=FALSE}
+formatdb -i <inpufile>
+```
+
+This will create a datbase with the same name as the input file. However, this requires a unzipped flat file, which is a no no in our case. You can run formatdb using the following command:
+
+```{r engine='bash',eval=FALSE}
+bzcat all.fas.bz2 | formatdb -i stdin -o T -n "all"
+```
+
+The ```-o``` options tells ```formatdb``` to create an index of the sequences. This will come handy if we would like to get a sequence out of this database later. ```-n``` option is necessary, because when reading from ```stdin```, ```formatdb``` has no idea what to call the database.
+
+Depending on your computer ram, you might have to change ```-v``` to fit the database entirely in the RAM. For a list of tips and tricks read the formatdb documentation:
+
+ftp://ftp.ncbi.nlm.nih.gov/blast/documents/formatdb.html
+
+## ```fastacmd```
+
+```fastacmd``` is a very useful utility supplied with BLAST. For instruction see:
+
+ftp://ftp.ncbi.nlm.nih.gov/blast/documents/fastacmd.html
+
+## Splitting the query file in small chunks
+
+To run BLAST over cluster we need to split the input fasta file into smaller chunk that will be send over to the cluster for parallel BLAST. We will split the file using a home-grown tool.
+
+```{r engine='bash',eval=FALSE}
+git clone https://github.com/malaybasu/SeqToolBox.git
+```
+Now split the fasta file into smaller pieces. The number of piece should approximately equal to the number of nodes that you have in you cluster.
+
+```{r engine='bash', eval=FALSE}
+echo $(( `bzcat all.fas.bz2| grep \> |wc -l` / 128 ))
+perl SeqToolBox/bin/splitfasta.pl -s 86 <(bzcat all.fas.gz)
+```
+
+## Submit jobs to cluster
+
+```{r engine='bash',eval=FALSE}
+for i in `ls *.fas`
+do 
+qsub -cwd -b y -V -j y -o $i.log -l h_rt=1:00:00,vf=5G \
+"blastall -e 0.001 -F T -p blastp -i $i -m 9 -d /scratch/user/malay/all \
+>$i.bla && bzip2 $i.bla"
+done
+
+# Clean the fas files and log files
+rm -rf *.log *.fas
+
+# Create a big file containing all the results
+cd ..
+bzcat test/*.bz2 | bzip2 -c >all.bla.bz2
+```
+
+One importatnt option is ```-F``` that switches the compositional filtering on. I suggest that you keep this option on.  
+
+<!--
+## Exercise
+
+Write a software that will parse the all.bla.bz2 file and the individual genome files and find orthologs using the reciprocal best blast algorithm
+-->
+
+# HMMER
+
+```HMMER``` is the only known software for HMM use in bioinformatics. You can download HMMER from 
+
+http://hmmer.janelia.org/software
+
+There are quite a few software that are bundled with HMMER distribution. But the 4 most common ones are:
+
+1. ```hmmsearch``` - Searches HMMs against protein sequences
+2. ```hmmscan``` - Searches protein sequences against HMM library
+3. ```hmmbuild``` - Builds HMM from a multiple alignment
+4. ```hmmpress``` - Convert a flat file HMM to binary format that can be used with the software
+
+
+## Exercise
+We will search the SwissProt data with a profile of P53 gene.  
+
+We will first get a bunch of orthologs of P53 from the Homologene database.
+
+```{r engine='bash', eval=F}
+wget --quiet ftp://ftp.ncbi.nih.gov/pub/HomoloGene/current/homologene.data
+```
+Now we will grep the file to find p53:
+```{r engine='bash'}
+cat homologene.data | grep -i tp53 | head -n 10
+```
+Looks like cluster 460 contains T53. We will use a bit of perl code to get the accession.
+```{r engine='bash',eval=FALSE}
+cat homologene.data | perl -ane 'print $F[5],"\n" if ($F[0] == 460)'>p53_homologene_ids.txt
+```
+We will now use NCBI eutils to extract those sesquence. Let's create a fasta file with this ids:
+
+```{r engine="bash",eval=FALSE}
+for i in `cat p53_homologene_ids.txt`
+do 
+wget -q -O - "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?\
+db=protein&id=$i&rettype=fasta&retmode=text"
+done >p53.fas
+```
+We will first use ```muscle``` to align those sequence and create the HMM, then search SC genome with it.
+
+```{r engine='bash',eval=FALSE}
+muscle -in p53.fas -out p53.aln
+hmmbuild --informat afa p53.hmm p53.aln
+hmmsearch -o hits.txt uniprot_sprot.fasta
+```
+
+<!---
+## Exercize
+Search P53 gene in human genome.
+
+
+# Problem 1
+Reciprocal best blast hit is a way to find orthologs in two or more genome. The algorithm was modified in Inparanoid to find the inparalogs within a genome. Inparalogs are gene that scores higher than the orthologs. Write a python script that will take a all vs all blast result of SC and SP and the individual BLAST file and will report not only the ortholog but also the inparalogs. 
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
