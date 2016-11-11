@@ -1,0 +1,81 @@
+---
+title: "Class notes"
+author: "Malay"
+date: "November 10, 2016"
+---
+
+
+```{r}
+data (women)
+head (women)
+dim(women)
+```
+
+```{r}
+plot(women)
+m <- lm(women$weight~women$height)
+abline(v=65, col="Blue")
+abline(h=140, col="Green")
+abline(m, col="red")
+s <- summary(m)
+```
+
+# Problem
+Take `airquality` dataset and calculate regression coeff of each variable vs the other and print the result as: `var1 <tab> var2 <tab> <R-squared`.
+
+```{r}
+data("airquality")
+ncol <- dim(airquality)[2]
+names <- colnames(airquality)
+d <- data.frame()
+
+for (i in 1:ncol) {
+  for (j in 1:ncol) {
+    if (i == j) {
+      next
+    }
+    x <- airquality[,i]
+    y <- airquality[,j]
+    
+    #### fit and extract R.sq
+    m <- lm(y~x)
+    s <- summary(m)
+    r.sq <- s$adj.r.squared
+    #########################
+    d <- rbind (d, data.frame(names[i], names[j], r.sq))
+  }
+  
+}
+o <- order(d$r.sq, decreasing = T)
+d <- d[o,]
+d
+```
+
+```{r}
+library(pheatmap)
+index <- complete.cases(airquality)
+c <- airquality[index,]
+c <- cor(c)
+pheatmap(c)
+
+ct <- cor.test(airquality$Ozone, airquality$Temp)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
