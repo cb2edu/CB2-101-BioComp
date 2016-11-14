@@ -1,0 +1,324 @@
+---
+title: 'CB2-101: R for Bioinformatics'
+author: "Malay (malay@uab.edu)"
+date: "November 14, 2016"
+output:
+  pdf_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  html_document:
+    theme: default
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
+```
+
+# Some useful resources
+
+R was a popular tool for analysis of microarray data. Now it is mostly used in Bioinformatics for analysis of next-gen sequence data. It is not very popular as a general purpose Bioinformatics tool. There are a bunch of special packages distributed under the name "BioConductor" (<http://www.bioconductor.org/>) that are related to biological data analysis using R.
+
+  - Bioinformatics using R
+    #. A little Book of R for Bioinformatics (<http://a-little-book-of-r-for-bioinformatics.readthedocs.org/en/latest/>).
+    
+  - Learning BioConductor
+    #. BioConductor help section contains exhaustive lists of conferences (<http://www.bioconductor.org/help/course-materials/>). The course materials of these conferences are very good.
+    #. A nice intermediate level guide to R and BioConductor: <http://www.bioconductor.org/help/course-materials/2013/SeattleMay2013/IntermediateSequenceAnalysis2013.pdf>.
+    #. A somewhat scattered introduction to NGS data analysis using R and BioConductor: <http://manuals.bioinformatics.ucr.edu/home/ht-seq>
+
+<!--
+# Standard file types in NGS pipelines
+
+## FASTQ
+A file format for getting the raw reads and the `quality` values. This is what you get from the sequencer. An example file can be found in the `ShortRead` package of BC. 
+
+### Exercise
+You can count the number of sequences in a FASTQ file like this.
+```{r engine='bash',eval=FALSE}
+zcat ERR127302_1_subset.fastq.gz | echo $(( `wc -l` / 4))
+```
+### Quality score
+Every fourth line of the file is the quality score value. The quality score is calculated as.
+
+$$
+Q = -10 logP
+$$
+
+Where $P$ is error probability. This score is then added to the number 33 to get the modern Phred+33 score line. 
+
+```{r}
+e <- seq(0,60,10)
+a <- 1 - 10^(-(e/10))
+plot(e,a,xlab="Phred score",ylab="Accuracy")
+lines(e,a)
+abline(v=20,col="red")
+```
+You can see there is sharp drop of quality below score 20. This is why Phred 20 is a good cutoff score. This actually (20 + 33) = 53 which `5` in ascii.
+
+## BAM or SAM format
+The FASTQ files are aligned against a reference genome using a software like BWA (<http://bio-bwa.sourceforge.net/>). The resulting alignment format is a BAM or SAM files. BAM files are binary, SAM files are plain text. The software for interconversion and analysis of these files are mainly `samtools` (<http://www.htslib.org/>). A small example BAM files comes along with `Rsamtools` package. Sam file format specification can be found here <http://samtools.github.io/hts-specs/SAMv1.pdf>.
+
+## VCF
+Once the alignment BAM files have been generated, a variant caller like GATK (<https://www.broadinstitute.org/gatk/>) is used to find the variants in the file. The resulting file is called VCF. The specification can be found here (<http://samtools.github.io/hts-specs/VCFv4.2.pdf>). A sample VCF line is given below:
+
+	chr1    873762  .       T   G   [CLIPPED] GT:AD:DP:GQ:PL    0/1:173,141:282:99:255,0,255
+	chr1    877664  rs3828047   A   G   [CLIPPED] GT:AD:DP:GQ:PL    1/1:0,105:94:99:255,255,0
+	chr1    899282  rs28548431  C   T   [CLIPPED] GT:AD:DP:GQ:PL    0/1:1,3:4:25.92:103,0,26
+
+Once the variant is called they are annotated using variant annotation tools like SnpEff (<http://snpeff.sourceforge.net/>) or Annovar (<http://www.openbioinformatics.org/annovar/>) or `VariantAnnotation` package.
+-->
+# Installing BioConductor packages
+
+All bioconductor packages are installed using the following commands:
+
+```{r, eval=FALSE}
+source("http://bioconductor.org/biocLite.R")
+biocLite("packagename")
+```
+
+Where, `packagename` is the name of your BioConductor package.
+
+
+# Where to start ?
+
+BioConductor is a jumbled mess of hundreds of packages. And a problem for the beginners is to know where to start and which packages to use. I suggest you start with the workflows page of BC (<http://bioconductor.org/help/workflows/>). Look at the examples and find out what packages are used and then go and dig for more information about those packages.
+
+
+# A simple example
+
+Lets start with a simple example. Remember, we calculated the average protein length of *E. coli* in our Linux problem set. Let's solve this using BC. The package that we need is `Biostrings`. Let's install the package.
+
+```{r, eval=FALSE}
+source("http://bioconductor.org/biocLite.R")
+biocLite("Biostrings")
+```
+Once the package is installed. We have to now load it.
+
+```{r}
+suppressPackageStartupMessages( library("Biostrings") ) 
+```
+You can see an overview of what `Biostrings` package has to offer.
+
+```{r, eval=FALSE}
+browseVignettes("Biostrings")
+```
+You can now get a quick overview by clicking on "Biostrings quick overview" PDF. By looking at the quick overview, we find that there is a function in `Biostrings` that can read the sequence: `readAAStringSet()`. 
+
+```{r tidy=FALSE}
+# Just to get the long line to wrap correctly
+url <- paste("ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Bacteria/Escherichia_coli_K_12_substr__MG1655_uid57779/NC_000913.faa", sep="")
+faa <- readAAStringSet(url)
+```
+We can get the average length now:
+
+```{r}
+av.length <- sum( width(faa) )/length(faa)
+av.length
+```
+
+
+# Some basic objects in BioConductor
+
+## IRanges
+`IRanges` represents orders indices.
+
+```{r}
+library(IRanges)
+r <- IRanges(start=c(1,3,12,10),end=c(4,5,25,19))
+r
+```
+### Simple operations on IRanges
+```{r}
+length(r)
+start(r)
+end(r)
+width(r)
+r[1:2]
+range(r)
+reduce(r)
+disjoin(r)
+coverage(r)
+```
+
+### Getting the flanking region
+```{r}
+flank(r, 1, both=T,start=T)
+```
+### Set operations on ranges
+```{r}
+r2 <- IRanges(start=c(7,8,14),end=c(11,16,18))
+union(r,r2)
+intersect(r,r2)
+setdiff(r,r2)
+```
+## Run length Encoding (RLE)
+```{r}
+x<- Rle(c(1,1,2,2,2))
+length(x)
+start(x)
+end(x)
+width(x)
+nrun(x)
+runLength(x)
+```
+## GenomicRanges
+There are 3 classes in this package: `GRanges`, `GRangeList`, `GappedAlignments`.
+
+###  GRanges
+
+
+```{r tidy=FALSE}
+library(GenomicRanges)
+gr <- GRanges(seqnames= Rle(c("chr1","chr2"),c(2,3)),
+			 ranges = IRanges (1:5, end= 6:10),
+			 strand = Rle(strand(c("-","+","+","-","+"))),
+			 score=1:5, GC=seq(1,0,length=5))
+gr
+```
+#### Access elements of GRanges
+
+```{r}
+length(gr)
+seqnames(gr)
+start(gr)
+end(gr)
+ranges(gr)
+strand(gr)
+```
+All other fields besides `seqnames`, `range` and `strands` need to be accessed by `elementMetadata` function.
+
+```{r}
+elementMetadata(gr)
+```
+
+### GRangesList
+
+It's a list of `GRanges` objects.
+
+```{r}
+GRangesList (gr, gr)
+```
+
+### GappedAlignments
+
+Used for parsing BAM files.
+
+## BSgenome
+
+`BSgenome` is the actual genome sequences distributed in a R package. This packages can be pretty big. For human this file is about 1.7G in size. For this course, we will not use it anymore.
+
+
+# Annotation database
+
+There are two types of annotation databases in BC. Organism-specific gene level databases are names as `org.XX.XXX.db`. For e.g., `org.Hs.eg.db`. This is human entrez gene database. There are also metapackaces (not for all organisms) that pull data from may different sources. `Homo.sapiens` is one such databases. Let's use this database.
+
+```{r}
+suppressPackageStartupMessages(library("Homo.sapiens"))
+columns(Homo.sapiens)
+```
+
+Only some of these columns can be use to retrieve data. To find what columns can be used
+
+```{r}
+keytypes(Homo.sapiens)
+```
+
+To extract data we need the "keys" corresponding to a "keytype". For example the `SYMBOL` keytypes stores the gene name and surprisingly `GENENAME` actually contains a description of gene. We can show the partial list of these genes.
+
+```{r cache=TRUE}
+genenames<-(keys(Homo.sapiens,keytype="SYMBOL"))
+```
+There are altogether `r length(unique(genenames))` genes in this database. We can now use `genenames` as keys to get the genes and their longer name for the database.
+
+```{r cache=TRUE}
+gene.list <-select(Homo.sapiens,keys=genenames,columns=c("SYMBOL","GENENAME"),keytype="SYMBOL")
+head(gene.list)
+```
+Let's do something interesting. Let plot the number of genes per chromosomes.
+
+```{r tidy=FALSE,tidy=TRUE}
+# Old bioconductor
+#gene.df <- select(Homo.sapiens,keys=genenames,columns=c("CHROM","CHRLOC","CHRLOCEND"),keytype="SYMBOL")
+gene.df <- select(Homo.sapiens,keys=genenames,columns=c("TXCHROM"),keytype="SYMBOL")
+head(gene.df)
+
+#Let's extract the SYMBOL and CHR is a separate dataframe.
+gene.uniq <- data.frame(symbol=gene.df$SYMBOL,chr=gene.df$TXCHROM)
+
+# Let's remove the duplicated lines.
+gene.uniq <- gene.uniq[order(gene.uniq$symbol),]
+gene.uniq <- gene.uniq[!duplicated(gene.uniq),]
+head(gene.uniq)
+gene.freq <- table(gene.uniq$chr)
+barplot(table(gene.uniq$chr),las=2)
+```
+## Number of genes per chromosome
+
+One of hypothesis that we can check whether the number of genes are correlated with the length of the chromosome. To get the length of the chromosome, we need to load another package in R `GenomicFeatures`.
+
+```{r cache=TRUE}
+suppressPackageStartupMessages(library("GenomicFeatures"))
+chr.info <- getChromInfoFromUCSC("hg19")
+head(chr.info)
+
+# Convert our frequency table into data frame
+gene.freq <- data.frame(gene.freq)
+names(gene.freq) <- c("chr","freq")
+
+# We need to convert the names of the chr column
+#gene.freq$chr <- paste('chr',gene.freq$chr,sep="")
+merged.data <- merge(gene.freq,chr.info,by.x="chr",by.y="chrom")
+plot(merged.data$length,merged.data$freq,xlab="Chrom length",ylab="Gene count")
+text(merged.data$length, merged.data$freq, merged.data$chr, cex=0.6, pos=4, col="red") 
+abline(lm(merged.data$freq~merged.data$length),col="blue")
+```
+
+
+## What is the mutation frequency of P53 gene in normal human population
+
+For this problem we first have to find the location of the P53 gene in human annotation database.
+
+```{r}
+library(Homo.sapiens)
+loc <- select(Homo.sapiens,keys="TP53",columns=c("SYMBOL","CHR","CHRLOC","CHRLOCEND"),keytype="SYMBOL")
+```
+We see that TP53 gene is on chromosome 17 in location 7571720:7590868. We will download this portion of the variation from 1000 genome data using `tabix`. Install `tabix` on your system.
+
+Once `tabix` is installed. We can download this portion of the file using the following command.
+
+```{r engine='bash',eval=FALSE}
+tabix -fh ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/release/20110521/\
+ALL.chr17.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz \
+17:7571720-7590868 >p53.vcf
+```
+Let's read the VCF file in R.
+
+```{r eval=FALSE}
+library(VariantAnnotation)
+vcf <- readVcf("p53.vcf","hg19")
+```
+We will now locate variant using the txdb package.
+
+```{r eval=FALSE}
+library("TxDb.Hsapiens.UCSC.hg19.knownGene")
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+txdb <- renameSeqlevels(txdb, gsub("chr","",seqlevels(txdb)))
+txdb <- keepSeqlevels(txdb,"17")
+all <- locateVariants(vcf,txdb, AllVariants())
+table(mcols(all)$LOCATION)
+```
+Looks like there are 162 variants in the coding regions in the 1000K sample. I will leave it to you to investigate this further.
+
+-------------------
+
+
+
+
+
+
+
+
+
+
