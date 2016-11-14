@@ -1,0 +1,76 @@
+---
+title: "Biological Data Formats"
+author: "Malay (malay@uab.edu)"
+date: "November 14, 2016"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+    number_sections: yes
+    toc: yes
+monofont: "Ubuntu Mono"
+---
+
+# Sources of data
+
+The major sources of data are sequences databases:
+
+1. NCBI: http://www.ncbi.nlm.nih.gov
+2. EBI: http://www.ebi.ac.uk/
+3. ENSEMBL: http://www.ensembl.org/index.html
+4. UCSC Genome Browser: https://genome.ucsc.edu/
+
+
+
+# Human Reference Genome
+
+1. Genome Reference Consortium. http://www.ncbi.nlm.nih.gov/projects/genome/assembly/grc/
+2. Gencode (ENSEMBL). http://www.gencodegenes.org/ 
+
+
+
+# FASTA format
+
+The most common file format for sequence files. 
+
+```
+>gi|5524211|gb|AAD44166.1| cytochrome b [Elephas maximus maximus]
+LCLYTHIGRNIYYGSYLYSETWNTGIMLLLITMATAFMGYVLPWGQMSFWGATVITNLFSAIPYIGTNLV
+EWIWGGFSVDKATLNRFFAFHFILPFTMVALAGVHLTFLHETGSNNPLGLTSDSDKIPFHPYYTIKDFLG
+LLILILLLLLLALLSPDMLGDPDNHMPADPLNTPLHIKPEWYFLFAYAILRSVPNKLGGVLALFLSIVIL
+GLMPFLHTSKHRSMMLRPLSQALFWTLTMDLLTLTWIGSQPVEYPYTIIGQMASILYFSIILAFLPIAGX
+IENY
+```
+
+
+
+# GenBank format
+
+Sample GenBank record: 
+http://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html
+
+
+
+# Annotation
+
+Annotation is a way to provide extra information over the raw sequence. Some sequence file formats by design have the annotaion built into the formation. An example is GenBank. Most commonly, annotaion comes in separate files. The files generally of two types:
+
+1. GTF 
+
+``` 
+	381 Twinscan	CDS	380	401	.	+	0	gene_id "001"; transcript_id "001.1";
+	381 Twinscan	CDS	501	650	.	+	2	gene_id "001"; transcript_id "001.1";
+	381	Twinscan	CDS	700	707	.	+	2	gene_id "001"; transcript_id "001.1";
+```
+
+2. GFF
+
+	The file format specification can be found here: 		http://useast.ensembl.org/info/website/upload/gff.html?redirect=no
+
+
+# Problem 1
+Bert Voglestein in a Science paper published in 2013 (PMID: 23539594) reported a list of Tumor Suppressor genes and Oncogenes. The list is available in the `data` folder as `vogelstein_tsg.txt`. Use the UNIPROT REST API get the protein IDs for the genes. 
+
+http://www.uniprot.org/uniprot/?query=organism:9606+AND+gene:BRCA1&format=tab&columns=id,reviewed
+
+# Problem 2
+Download the Swissprot FASTA file from the UNIPROT website. Write a script to extract the sequences corresponding to the IDs created in Problem 1 from this file. 
