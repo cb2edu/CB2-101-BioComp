@@ -1,5 +1,23 @@
-# Generate index chr20
+# Put all the software in path
+
+# Alignment
+
+## Generate index chr20
 /share/apps/bwa-0.7.10/bwa index chr20.fa -p chr20
+
+## Convert sam to bam
+samtools view -b SRR765989.sam >SRR765989.bam
+
+## Sort the bam file based on coordinate
+samtools sort SRR765989.bam >SRR765989.sorted.bam
+
+## Mark duplicates
+java -jar picard.jar MarkDuplicates INPUT=SRR765989.sorted.bam OUTPUT=SRR765989.dup.bam\
+    METRICS_FILE=picard_metrics.txt VALIDATION_STRINGENCY=LENIENT
+
+### Index reference genome to use for GenomeAnalysisTK
+
+#---------------------Old code------------------------------
 # Generate samtools faidx
 /share/apps/samtools/samtools faidx human/chr20.fa
 # Generate dic file with picard
