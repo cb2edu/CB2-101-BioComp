@@ -1,0 +1,171 @@
+---
+title: "Introduction to RNASeq"
+author: "Malay (malay@uab.edu)"
+date: "November 18, 2016"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: yes
+    toc: yes
+  word_document: default
+fontsize: 11pt
+mainfont: Minion Pro
+mathfont: Palatino
+monofont: Fira Mono
+csl: bioinformatics.csl
+sansfont: Myriad Pro
+bibliography: bibliography.bib
+---
+
+# Introduction
+
+RNASeq is a very vast topic and tons of papers have been and are being written on the topic. The following is just an overview.
+
+Originally the idea was proposed by @Mortazavi2008. Although several modifciation of the original idea have been developed, the basics did not change. In this handout will use the latest in the RNASeq methodology through the use of software called RSEM [@Li2011]. 
+
+
+
+# Normalization of RNASeq data
+
+People have proposed several methods of normalization of RNASeq data. For a comparison see @Dillies2013. 
+
+# Datasets
+
+Every diffential expression measurment should have biological replicates. For demonstration, we will use only 1 replicate for two biological conditions. But in real life, this should never be used. We will use two small datasets from Illumina Body Map project. These are samples prpared from adrenal gland and brain and only from chromosome 19. You can download the datasets here:
+
+http://cmb.path.uab.edu/training/docs/CB2-201-2015/rnaseq_data.tar.gz
+
+Unzip the file.
+
+# STAR
+STAR is a modern fast aligner for RNASeq data to reference genome. 
+
+```{r engine="bash",eval=F}
+wget https://github.com/alexdobin/STAR/archive/2.5.1b.tar.gz
+tar -xvzf 2.5.1b.tar.gz
+cd STAR-2.5.1b
+make
+```
+
+Put the software in your path
+
+```{r engine="bash", eval=F}
+cd Linux_x86_64_static/
+export PATH=$PATH:`pwd`
+```
+
+Prepare the referene genome:
+
+```{r engine="bash", eval=F}
+mkdir hs
+STAR --runThreadN 8 --genomeDir hs --runMode genomeGenerate \
+   --genomeFastaFiles chr19.fa --sjdbGTFfile human_chr19.gtf
+```
+
+Now create the alignment. There is a special option for STAR to create a "transcriptome alignment" that could be fed directly to RSEM.
+
+```{r engine="bash", eval=F}
+STAR --runThreadN 8 --genomeDir hs --readFilesIn adrenal_R1.fq \
+    adrenal_R2.fq --quantMode TranscriptomeSAM
+```
+
+
+
+# RSEM
+
+RSEM is a cutting-edge RNASeq analysis package that is an end-to-end solution for differential expression, and simplifies the whole process. It also intriduces a new more robust unit of RNASeq measurement called TPM. 
+
+
+## Installing RSEM
+
+```{r engine='bash',eval=F}
+wget http://deweylab.biostat.wisc.edu/rsem/src/rsem-1.2.19.tar.gz
+tar -xvzf rsem-1.2.19.tar.gz
+cd rsem-1.2.19/
+make
+export PATH=$PATH:`pwd`
+
+# Install ebseq
+module load R/R-3.1.2
+make ebseq
+cd EBSeq/
+export PATH=$PATH:`pwd`
+```
+
+<!--
+## Install Bowtie
+Download Bowtie from http://sourceforge.net/projects/bowtie-bio/files/bowtie/1.1.1/
+
+-->
+## Prepare reference 
+
+```{r engine='bash',eval=F}
+rsem-prepare-reference --gtf human_chr19.gtf chr19.fa rsem/chr19
+```
+
+## Calculate expression directly from STAR output
+
+
+```{r engine='bash',eval=F}
+rsem-calculate-expression --no-bam-output --paired-end \
+  --bam Aligned.toTranscriptome.out.bam rsem/chr19 adrenal
+```
+
+## Simpler way to estimating expression
+
+```{r engine="bash",eval=F}
+rsem-prepare-reference --gtf human_chr19.gtf --star --star-path \
+  ../STAR-2.5.1b/bin/Linux_x86_64_static -p 8 chr19.fa hs/chr19
+rsem-calculate-expression  --paired-end --star --star-path \
+  ../STAR-2.5.1b/bin/Linux_x86_64_static/ -p 8 adrenal_R1.fq \
+  adrenal_R2.fq hs/chr19 adrenal_rsem
+rsem-calculate-expression  --paired-end --star --star-path \
+  ../STAR-2.5.1b/bin/Linux_x86_64_static/ -p 8 brain_R1.fq brain_R2.fq \
+  hs/chr19 brain_rsem
+```
+
+
+## Differential expression
+
+```{r engine='bash',eval=FALSE}
+rsem-generate-data-matrix adrenal_chr19.genes.results human_chr19.genes.results \
+  >diff-brain-adrenal.txt
+rsem-run-ebseq diff-brain-adrenal.txt 1,1 expression.results.txt
+rsem-control-fdr expression.results.txt 0.05 expression_final.txt
+```
+
+And we have our differentially expressed genes.
+
+## Volcano plot
+
+Volcano plot is a good way to show the differentially expressed genes. For that we need the p-value for the differentially expressed genes  and the the fold change. Given by "PPEE" and "RealFC" values.
+
+```{r}
+data<-read.table("expression.results.txt")
+plot(log2(data$RealFC),data$PPDE,xlab="Fold change",ylab="P-value")
+```
+
+# EDGER
+
+```{r eval=FALSE}
+raw.data <- read.table("../data/pnas_expression.txt",header=T)
+head(raw.data)
+counts <- raw.data[ , -c(1,ncol(raw.data))]
+rownames(counts) <- raw.data$ensembl_ID
+colnames(counts)  <- paste(c(rep("C_R",4),rep("T_R",3)),c(1:4,1:3),sep="")
+
+library(edgeR)
+group <- c(rep("C", 4) , rep("T", 3))
+cds <- DGEList( counts , group = group )
+cds <- calcNormFactors(cds)
+design <- model.matrix(~group)
+y <- estimateDisp(cds, design)
+fit <- glmQLFit(y,design)
+qlf <- glmQLFTest(fit,coef=2)
+topTags(qlf)
+```
+
+
+
+
+# Bibliography
