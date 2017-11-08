@@ -1,7 +1,7 @@
 ---
 title: "Reproducilble Research"
 author: "Malay (malay@uab.edu)"
-date: "November 10, 2016"
+date: "November 8, 2017"
 output:
   pdf_document:
     number_sections: yes
