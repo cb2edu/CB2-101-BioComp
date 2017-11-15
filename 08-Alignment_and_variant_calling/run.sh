@@ -1,6 +1,42 @@
+### NGS code for CB2-101
+### Variant detection
+
+# Download data file
+wget https://github.com/cb2edu/CB2-101-BioComp/raw/master/08-Alignment_and_variant_calling/data/cb2-101-variant_detection_sample_data.tar.xz
+
+# Download bwa
+wget http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.15.tar.bz2?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fbio-bwa%2Ffiles%2F&ts=1479318023&use_mirror=superb-dca2
+
+#Download samtools
+wget https://github.com/samtools/samtools/releases/download/1.3.1/samtools-1.3.1.tar.bz2
+
+# Install some needed software
+su -c "yum install ncurses ncurses-devel"
+
+# Donwload GATK
+wget -O Gatk.tar.bz2 https://software.broadinstitute.org/gatk/download/auth?package=GATK
+
+# Get picard
+wget https://github.com/broadinstitute/picard/releases/download/2.15.0/picard.jar
+
 # Put all the software in path
 
-# Alignment
+
+####################### Alignment #############################
+
+# Step 1 create BWA index
+bwa index chr20.fa
+
+# Align the sequence agains the reference
+bwa mem chr20.fa SRR765989_F1.fastq SRR765989_F2.fastq >SRR765989.sam
+
+# Convert sam to bam files
+samtools view -bS SRR765989.sam >SRR765989.bam
+
+# Sort the bam files
+samtools sort SRR765989.bam >SRR765989.sorted.bam
+
+
 
 ## Generate index chr20
 /share/apps/bwa-0.7.10/bwa index chr20.fa -p chr20
@@ -11,11 +47,46 @@ samtools view -b SRR765989.sam >SRR765989.bam
 ## Sort the bam file based on coordinate
 samtools sort SRR765989.bam >SRR765989.sorted.bam
 
+
+################### Variant detection ################################
 ## Mark duplicates
 java -jar picard.jar MarkDuplicates INPUT=SRR765989.sorted.bam OUTPUT=SRR765989.dup.bam\
     METRICS_FILE=picard_metrics.txt VALIDATION_STRINGENCY=LENIENT
 
-### Index reference genome to use for GenomeAnalysisTK
+# Create dictionary for the reference genome
+java -jar ../../picard-tools-1.140/picard.jar CreateSequenceDictionary REFERENCE=chr20.fa OUTPUT=chr20.dict
+
+# Create an index of the reference
+samtools faidx chr20.fa
+
+# Add readgroups to bam file
+# For the description of readgroups look here:
+# https://software.broadinstitute.org/gatk/documentation/article.php?id=6472
+java -jar ../picard-tools-1.140/picard.jar AddOrReplaceReadGroups I=SRR765989.dup.bam O=SRR765989.dup.rg.bam RGID=4 RGLB=lib1 RGPL=illumina RGPU=unit1 RGSM=20 CREATE_INDEX=true
+
+## create realignment target
+java -jar ../GenomeAnalysisTK.jar -T RealignerTargetCreator -R gatk_ref/chr20.fa -o SRR765989.paired.bam.list -I SRR765989.dup.rg.bam
+
+# Realign
+java -jar ../GenomeAnalysisTK.jar -I SRR765989.dup.rg.bam -R gatk_ref/chr20.fa -T IndelRealigner -targetIntervals SRR765989.paired.bam.list -o SRR765989.realigned.bam
+
+# Create vcf
+# Use Haplotypecaller for all cases
+# For options see:
+# https://software.broadinstitute.org/gatk/documentation/article?id=2803
+# -stand_emit_conf shows error
+java -jar GenomeAnalysisTK.jar  -T HaplotypeCaller -R chr20.fa  -I SRR765989.realigned.bam --genotyping_mode DISCOVERY -stand_call_conf 30 -o raw_variants.vcf
+
+# Variant annotation using SNPEFF
+## Download SNPEFF
+wget -O snpeff.zip https://sourceforge.net/projects/snpeff/files/snpEff_latest_core.zip/download
+
+## Find all the available databases for annotation
+java -Xmx2g -Djava.io.tmpdir=. -jar ../snpEff/snpEff.jar databases | grep -i Homo_sapiens
+
+## Annotate VCF file
+java -Xmx2g -Djava.io.tmpdir=. -jar snpEff.jar -v hg19 SRR765989.vcf >SRR765989.snpeff.vcf
+
 
 #---------------------Old code------------------------------
 # Generate samtools faidx
