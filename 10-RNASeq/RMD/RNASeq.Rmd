@@ -147,6 +147,8 @@ plot(log2(data$RealFC),data$PPDE,xlab="Fold change",ylab="P-value")
 
 # EDGER
 
+For EDGER we need a count table data for mutiple sample. The supplied `pnas_expression.txt` is a sample file derived from the paper here: https://www.ncbi.nlm.nih.gov/pubmed/19088194.
+
 ```{r eval=FALSE}
 raw.data <- read.table("../data/pnas_expression.txt",header=T)
 head(raw.data)
