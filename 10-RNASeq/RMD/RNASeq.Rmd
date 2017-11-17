@@ -167,7 +167,77 @@ qlf <- glmQLFTest(fit,coef=2)
 topTags(qlf)
 ```
 
+# DESEQ2
 
+```{r}
+suppressPackageStartupMessages(library(DESeq2))
+counts <- read.table("../data/pnas_expression.txt",header = T)
+row.names(counts) <- counts$ensembl_ID
+counts <- as.matrix(counts[,-c(1,ncol(counts))])
+counts <- counts[rowSums(counts) != 0,]
+coldata <- data.frame(condition=c(rep("C",4), rep("T",3)))
+row.names(coldata) <- colnames(counts)
+coldata <- as.matrix(coldata)
+dds <- DESeqDataSetFromMatrix(countData = counts, colData = coldata, design = ~ condition)
+dds <- estimateSizeFactors(dds)
+```
+Get the size factor estimate
+
+```{r}
+#get the sizefactors
+sizeFactors(dds)
+```
+
+To get the count normalized count table:
+```{r}
+head(counts(dds, normalized=T))
+```
+
+Now we can run the differential expression analysis.
+
+```{r}
+dds <- DESeq(dds)
+results <- results(dds)
+results
+```
+
+Sort results based on p-value.
+
+```{r}
+results<- results[order(results$padj),]
+results
+```
+
+## MA-plot
+```{r}
+plotMA(results)
+```
+
+## Principal component
+
+```{r}
+d <- read.table("../data/pnas_expression.txt",header=T)
+rownames(d) <- d$ensembl_ID
+d <- d[,-c(1,9)]
+d <- d+1
+log.d <- log(d)
+
+#We would like to cluster the samples
+# Samples are rows
+log.d.t <- t(log.d)
+
+d.pca <- prcomp(log.d.t)
+
+#head(print(d.pca))
+
+#scree plot
+plot(d.pca,type="l")
+summary(d.pca)
+# Eigenvalues
+d.pca$sdev^2
+plot(d.pca$x[,1],d.pca$x[,2],col=as.factor(coldata), main="PCA",xlab="PC1",ylab="PCA2")
+
+```
 
 
 # Bibliography
