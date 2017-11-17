@@ -213,7 +213,7 @@ results
 plotMA(results)
 ```
 
-## Principal component
+## Principal component analysis
 
 ```{r}
 d <- read.table("../data/pnas_expression.txt",header=T)
