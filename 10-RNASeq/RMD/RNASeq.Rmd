@@ -1,7 +1,7 @@
 ---
 title: "Introduction to RNASeq"
 author: "Malay (malay@uab.edu)"
-date: "November 18, 2016"
+date: "November 17, 2017"
 output:
   pdf_document:
     latex_engine: xelatex
@@ -169,7 +169,7 @@ topTags(qlf)
 
 # DESEQ2
 
-```{r}
+```{r cache=TRUE}
 suppressPackageStartupMessages(library(DESeq2))
 counts <- read.table("../data/pnas_expression.txt",header = T)
 row.names(counts) <- counts$ensembl_ID
@@ -177,25 +177,25 @@ counts <- as.matrix(counts[,-c(1,ncol(counts))])
 counts <- counts[rowSums(counts) != 0,]
 coldata <- data.frame(condition=c(rep("C",4), rep("T",3)))
 row.names(coldata) <- colnames(counts)
-coldata <- as.matrix(coldata)
+#coldata <- as.matrix(coldata)
 dds <- DESeqDataSetFromMatrix(countData = counts, colData = coldata, design = ~ condition)
 dds <- estimateSizeFactors(dds)
 ```
 Get the size factor estimate
 
-```{r}
+```{r cache=TRUE}
 #get the sizefactors
 sizeFactors(dds)
 ```
 
 To get the count normalized count table:
-```{r}
+```{r cache=TRUE}
 head(counts(dds, normalized=T))
 ```
 
 Now we can run the differential expression analysis.
 
-```{r}
+```{r cache=TRUE}
 dds <- DESeq(dds)
 results <- results(dds)
 results
@@ -203,19 +203,19 @@ results
 
 Sort results based on p-value.
 
-```{r}
+```{r cache=TRUE}
 results<- results[order(results$padj),]
 results
 ```
 
 ## MA-plot
-```{r}
+```{r cache=TRUE}
 plotMA(results)
 ```
 
 ## Principal component analysis
 
-```{r}
+```{r cache=TRUE}
 d <- read.table("../data/pnas_expression.txt",header=T)
 rownames(d) <- d$ensembl_ID
 d <- d[,-c(1,9)]
@@ -235,8 +235,34 @@ plot(d.pca,type="l")
 summary(d.pca)
 # Eigenvalues
 d.pca$sdev^2
-plot(d.pca$x[,1],d.pca$x[,2],col=as.factor(coldata), main="PCA",xlab="PC1",ylab="PCA2")
 
+plot(d.pca$x[,1], d.pca$x[,2],col=coldata$condition, main="PCA",xlab="PC1",ylab="PCA2")
+
+```
+
+# Gene set enrichment analysis
+
+Consider a bag full of marbles (total $N$) containing $K$ green marbles and $(N - K)$ red marbles. If we draw a sample of $n$ from this bag, the probablity of getting exactly $k$ green marble is given by *Hypergeometric distribution*.
+
+$$
+Prob(X=k) = \frac{ {{K}\choose{k}} {{N-K}\choose{n-k} }}{ {{N}\choose{n}} }
+$$
+
+This is exactly the scenario of finding a pathway or gene-ontology hits with differentially expressed gene sets. In this case:
+
+$$
+\begin{aligned} 
+N = \text{total number of genes in the genome} \\
+n = \text{number of differentially expressed genes (degs) with significant p-value} \\
+K = \text{Number of genes in a pathway or ontology} \\
+k = \text{overlap between degs and that pathway} \\
+\end{aligned} 
+$$
+
+To calculate this probability in `R` we need to calcualate the cumulative distribution of $(overlap >= k)$.
+
+```{r eval=FALSE}
+phyper(q=k, m=K, n=N-K, k=n, lower.tail = FALSE)
 ```
 
 
