@@ -67,10 +67,31 @@ ALL.chr17.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz \
 ```
 
 
+# BCFtools
+
+Download and install BCFtools using the standard procedure.
+
+```{r eval=FALSE, engine='bash'}
+wget https://github.com/samtools/bcftools/releases/download/1.6/bcftools-1.6.tar.bz2
+
+# Extract only the PRIMARY column for the TCGA VCF and
+# remove all line wihtout the alternate allete
+
+bcftools view -s PRIMARY -a TCGA_test.vcf.gz
+
+# filter snv where PRIMARY has DP > 10
+bcftools view -s PRIMARY -a TCGA_test.vcf.gz | \
+bcftools filter -i "FORMAT/DP>10"
+
+
+```
+
+
 
 
 # VCFtools
 
+** VCFtools is currently broken **
 Software suite to manipulate VCF files. Website https://vcftools.github.io/index.html. There is a set of individual perl command and also a single tool. 
 
 ```{r engine="bash", eval=F}
