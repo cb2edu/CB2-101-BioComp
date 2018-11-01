@@ -1,7 +1,6 @@
 ---
 title: 'CB2-101: Introduction to Linux'
 author: "Malay K Basu (malay@uab.edu)"
-date: "Nov 2-3, 2017"
 output:
   pdf_document:
     latex_engine: xelatex
@@ -311,32 +310,33 @@ But once you know how to use `wget` correctly, you can use it to do pretty sophi
 We will be using `wget` to download files from `ftp` sites like NCBI.
 
 ## Exercise
-If you go to  the *Drosophila melanogaster* genome `ftp` site (<ftp://ftp.ncbi.nlm.nih.gov/genomes/Drosophila_melanogaster/RELEASE_5_48/>) on NCBI, you will find that files are scattered in 5 directories, each corresponding to one chromosome:
+If you go to  the *Drosophila melanogaster* genome `ftp` site (<ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Drosophila_melanogaster/RELEASE_5_48/>) on NCBI, you will find that files are scattered in 5 directories, each corresponding to one chromosome:
 
 	CHR_2 CHR_3 CHR_4 CHR_Un CHR_X
 
 Each of these directories contain many files. The protein sequences are in `.faa` files. To download all the protein `fasta` files in the current directory, use
 
-	wget ftp://ftp.ncbi.nlm.nih.gov/genomes/Drosophila_melanogaster/RELEASE_5_48/\
+	wget ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Drosophila_melanogaster/RELEASE_5_48/\
 	CHR_{{2..4},Un,X}/*.faa
 
 This download works, because there only few subdirectories. If there are too many directories, then we should use,
 
-	wget -r -A.faa ftp://ftp.ncbi.nlm.nih.gov/genomes/Drosophila_melanogaster/RELEASE_5_48/
+	wget -r -A.faa ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/\
+	Drosophila_melanogaster/RELEASE_5_48/
 
 But the command recreates all subdirectories. Finally this should replicate the first command,
 
-	wget -r -nH --cut-dirs=4 -A.faa ftp://ftp.ncbi.nlm.nih.gov/\
-	genomes/Drosophila_melanogaster/RELEASE_5_48/
+	wget -r -nH --cut-dirs=6 -A.faa ftp://ftp.ncbi.nlm.nih.gov/genomes/\
+	archive/old_refseq/Drosophila_melanogaster/RELEASE_5_48/
 
-In last two commands we download every `".faa"` files, because each directory is *D. melanogaster* represents a chromosome. But look at the *D. pseudoobscura* site (<ftp://ftp.ncbi.nlm.nih.gov/genomes/Drosophila_pseudoobscura/>). The directories are,
+In last two commands we download every `".faa"` files, because each directory is *D. melanogaster* represents a chromosome. But look at the *D. pseudoobscura* site (<ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Drosophila_pseudoobscura/>). The directories are,
 
 	CHR_2 CHR_3 CHR_Un mapview
 
 Clearly `mapview` is *not* a genome directory. In this case we should download `".faa"` files only from directories that matches `CHR_*`.
 
-	wget -r -nH --cut-dirs=4 -A.faa -I genomes/Drosophila_pseudoobscura/CHR_* \
-	ftp://ftp.ncbi.nlm.nih.gov/genomes/Drosophila_pseudoobscura/
+	wget -r -nH --cut-dirs=4 -A.faa -I genomes/archive/old_refseq/Drosophila_pseudoobscura/CHR_* \
+	ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Drosophila_pseudoobscura/
 
 
 
@@ -380,7 +380,7 @@ cat myfile.txt | tr -d "\n"
 In the `wget` examples we downloaded `.faa` files using this command,
 
 	wget -r -A.faa \ 
-		ftp://ftp.ncbi.nlm.nih.gov/genomes/Drosophila_melanogaster/RELEASE_5_48/
+		ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Drosophila_melanogaster/RELEASE_5_48/
 
 This recreated all the intermediate directory and `.faa` files are deeply nested in a directory hierarchy. We can find all the `.faa` files like this,
 
