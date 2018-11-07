@@ -1,7 +1,7 @@
 ---
 title: "Biological Data Formats"
 author: "Malay (malay@uab.edu)"
-date: "November 13, 2017"
+date: "November 7, 2018"
 output: 
   pdf_document: 
     latex_engine: xelatex
