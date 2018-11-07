@@ -1,13 +1,20 @@
 ---
 title: "CB2-101: Sequence Similarity Search"
 author: "Malay (malay@uab.edu)"
-date: "Nov 9, 2017"
+date: "Nov 8, 2018"
 output:
   pdf_document:
     latex_engine: xelatex
     number_sections: yes
     toc: yes
 ---
+# Note
+
+NCBI has recently removed the C blast programs from there website. Please download last C BLAST from our own copy to use the example in this handout.
+
+http://cmb.path.uab.edu/training/2018/files/blast-2.2.26.tar.gz
+
+
 
 # Simple BLAST
 
