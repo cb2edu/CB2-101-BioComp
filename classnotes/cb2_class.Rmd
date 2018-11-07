@@ -1,0 +1,271 @@
+---
+title: "CB2 class"
+output: html_document
+---
+
+# Introduction to R
+
+```{R}
+getwd()
+setwd()
+list.files()
+
+x = 2
+x <- 2
+y = 3
+y <- 3
+x + y
+
+myadd <- function(a, b) {
+  if (is.numeric(a) & is.numeric(b) ) {
+    return(a+b)  
+  }
+}
+
+myadd(x,y)
+result <- myadd(10, 15)
+ls()
+result
+print(result)
+myadd(5, 10)
+```
+
+# Vectors
+
+```{r}
+v <- c(1,2,3)
+class(v)
+str(v)
+v <- vector()
+v[1] <- 2
+v[3] <- 3
+str(v)
+sum(v)
+
+!is.na(v)
+v[1]
+v[2]
+v[v>2]
+v <- v[!is.na(v)]
+v <- c(1:100)
+v[v%%2 != 0]
+length(v)
+v[1] <- 0
+class(v)
+v <- as.character(v)
+typeof(v)
+class(v)
+```
+
+# List
+
+```{r}
+l <- list(a="Hello", b="world",c=42, v=v)
+str(l)
+l[[4]][1]
+l[["v"]][1]
+l$v[1]
+l$v[c(1,99)]
+l$v <- "vector gone"
+str(l)
+f <- factor(c("yes", "no"))
+str(f)
+```
+
+
+# Matrix
+
+```{r}
+m <- matrix(1:9, nrow=3, ncol=3, byrow = T)
+m[1,1]
+m[,2]
+print(v)
+cat(v)
+dim(m)[2]
+ncol(m)
+dim(m)[1]
+nrow(m)
+attributes(m)
+dim(m) <- c(9,1)
+
+v1 <- c(10:12)
+v2 <- c(2:4)
+v1
+v2
+mr <- rbind(v1, v2)
+mr
+mc <- cbind(v1, v2)
+mc
+mc <- t(mc)
+mc
+```
+
+# Data frames
+
+```{r}
+data("airquality")
+summary(airquality)
+write.table(x = airquality, file = "myairquality.tsv", row.names = F,quote = F,sep = "\t",col.names = T) 
+
+myairqulality <- read.table("myairquality.tsv",header = T)
+head(myairqulality)
+
+m <- myairqulality
+m[,1]
+m[1,]
+m$Ozone
+colnames(m)
+names(m)
+row.names(m)
+
+
+result <- vector()
+
+for(i in 1:ncol(m)) {
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  data
+  result[i] <- sum(m[,i])
+}
+result
+```
+
+# Plotting
+
+```{r}
+data(iris)
+head(iris)
+View(iris)
+summary(iris)
+plot(iris)
+plot(iris$Petal.Length, iris$Petal.Width, xlab = "Petal length", ylab="Petal width", main="Petal length vs Petal width")
+
+{
+pdf("~/iris.pdf",width = 8.5, height = 11)
+
+plot(iris$Petal.Length, iris$Petal.Width, xlab="",ylab = "", axes=F, type="n")
+points(iris$Petal.Length, iris$Petal.Width, pch=16, col="blue")
+axis(1)
+axis(2)
+box()
+title(main="Petal length vs Pental width", xlab="Petal length", ylab="Petal width")
+legend("topleft", legend = "Something", pch=16)
+dev.off()
+}
+getwd()
+```
+
+## Plotting side by side
+
+```{r}
+pdf("side_by_side.pdf")
+par(mfrow=c(1,2),pty="s")
+plot(iris$Petal.Length,iris$Petal.Width)
+plot(iris$Sepal.Length, iris$Sepal.Width)
+dev.off()
+par(mfrow=c(1,1))
+```
+
+## Regression
+
+```{r}
+# lm(y~x)
+m <- lm(iris$Petal.Width~iris$Petal.Length)
+{plot(iris$Petal.Length, iris$Petal.Width,col=iris$Species)
+abline(m)}
+summary(m)
+```
+## Splitting data
+
+```{r}
+split_data <- split(x = iris, f=iris$Species)
+str(split_data)
+setosa_data <- split_data[["setosa"]]
+View(setosa_data)
+s <- summary(m)
+s$adj.r.squared
+names(split_data)
+
+for(i in names(split_data)) {
+  d <- split_data[[i]]
+  x <- d$Petal.Length
+  y <- d$Petal.Width
+  m <- lm(y~x)
+  cat (i, summary(m)$adj.r.squared, "\n")
+}
+
+result <- lapply(split_data, 
+                 function(d){
+                    x <- d$Petal.Length
+                    y <- d$Petal.Width
+                    m <- lm(y~x)
+                    return(summary(m)$adj.r.squared)
+                 }
+                 )
+result
+result$versicolor
+```
+
+## Histogram
+
+```{r}
+d <- rnorm(1000, mean = 10,sd = 10)
+hist(d,breaks = 50)
+mean(d)
+sd(d)
+median(d)
+
+```
+
+## Boxplot
+
+```{r}
+boxplot(iris)
+boxplot(d)
+
+
+```
+## barplot
+
+```{r}
+count <- table(iris$Petal.Length)
+count
+data(mtcars)
+View(mtcars)
+count <- table(mtcars$cyl, mtcars$gear)
+count
+barplot(count,beside = T)
+barplot(height = c(3,5,7))
+```
+
