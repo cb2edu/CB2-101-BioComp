@@ -1,7 +1,7 @@
 ---
 title: "NGS File Formats and Sequence Quality Check"
 author: "Malay (malay@uab.edu)"
-date: "November 14, 2017"
+date: "November 9, 2018"
 output:
   pdf_document:
     fig_caption: yes
