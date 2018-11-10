@@ -69,6 +69,10 @@ To view the tree we can use ```FigTree```. You can download it from here:
 
 http://tree.bio.ed.ac.uk/software/figtree/
 
+Download and run the software as
+
+`java -jar figtree.jar`
+
 ![Tree generated using ```neighbor```](figures/outtree.pdf)
 
 ## Bootstrapping
@@ -81,7 +85,7 @@ seqboot
 rm infile
 mv outfile infile
 ```
-Now follow the exact step described earlier. Don't forget to change the option "Multple data sets". The treefile will now have 100 trees (if you have used 100 bootstrap datasets). 
+Now follow the exact step described earlier. Don't forget to change the option **"Multple data sets"**. The treefile will now have 100 trees (if you have used 100 bootstrap datasets). 
 
 After you have created 100 trees. Run ```consense``` to get a consensus tree:
 
