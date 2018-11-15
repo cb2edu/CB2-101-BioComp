@@ -1,7 +1,7 @@
 ---
 title: "Introduction to RNASeq"
 author: "Malay (malay@uab.edu)"
-date: "November 17, 2017"
+date: "November 16, 2018"
 output:
   pdf_document:
     latex_engine: xelatex
@@ -15,6 +15,7 @@ monofont: Fira Mono
 csl: bioinformatics.csl
 sansfont: Myriad Pro
 bibliography: bibliography.bib
+urlcolor: blue
 ---
 
 # Introduction
@@ -33,9 +34,23 @@ People have proposed several methods of normalization of RNASeq data. For a comp
 
 Every diffential expression measurment should have biological replicates. For demonstration, we will use only 1 replicate for two biological conditions. But in real life, this should never be used. We will use two small datasets from Illumina Body Map project. These are samples prpared from adrenal gland and brain and only from chromosome 19. You can download the datasets here:
 
-http://cmb.path.uab.edu/training/docs/CB2-201-2015/rnaseq_data.tar.gz
+<https://github.com/cb2edu/CB2-101-BioComp/raw/2018/10-RNASeq/data/rnaseq_data.tar.gz>
 
 Unzip the file.
+
+# Required software
+
+1. Install on Linux the following packages:
+	`openssl` 
+	`openssl-devel`
+	`curl`
+	`curl-devel`
+
+2. It was previously fairly complicated to install bioconductor packages. But if you're using R version 3.5 or above, a package from CRAN can make the process easier. Run in R console:
+
+	install.packages("BiocManager")
+
+Use `BiocManager::install()` function to install R packages.
 
 # STAR
 STAR is a modern fast aligner for RNASeq data to reference genome. 
