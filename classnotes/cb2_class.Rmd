@@ -266,6 +266,19 @@ View(mtcars)
 count <- table(mtcars$cyl, mtcars$gear)
 count
 barplot(count,beside = T)
-barplot(height = c(3,5,7))
+barplot(height = c(3,5,7), col=c("red","green", "blue"))
+
+library(RColorBrewer)
+nice_colors <- brewer.pal(3, "Pastel2")
+barplot(height = c(3,5,7), col=nice_colors)
+```
+```{r}
+ps <- seq (0, 50, 10)
+ps
+acc <- 1 - 10^(-ps/10)
+plot (ps, acc, xlab="Phred score", ylab="Accuracy")
+lines(ps, acc)
+abline(v=20, col="red")
+#acc
 ```
 
