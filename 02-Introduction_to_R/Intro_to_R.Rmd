@@ -527,6 +527,24 @@ par(mfrow=c(1,2))
 with(airquality, {plot(Wind,Ozone);plot(Temp,Wind)})
 ```
 
+## Multiplots in ggplot
+
+There are four ways to draw the multiplots in ggplot2:
+- grid.arrange() [gridExtra package]
+- plot_grid() [cowplot package]
+- plot_layout() [patchwork package]
+- ggarrange() [ggpubr package]
+
+```{r}
+library(ggplot2)
+p1 <- ggplot(airquality, aes(x=Wind, y=Ozone)) +
+	geom_point()
+p2 <- ggplot(airquality, aes(x=Temp, y=Wind)) +
+	geom_point()
+suppressPackageStartupMessages(library(cowplot))
+combined_plot <- plot_grid(p1,p2,nrow=1)
+print(combined_plot)
+```
 
 ## Histograms
 
@@ -539,12 +557,39 @@ No of breaks in the histogram can be controlled:
 hist(airquality$Ozone, breaks=50)
 ```
 
+## Histogram in ggplot
+
+```{r}
+library(ggplot2)
+g <- ggplot(data = airquality, aes(x=airquality$Ozone)) +
+	geom_histogram()
+g
+```
+
 ## Boxplots
 Boxplot is an summary plot showing the median and the distributions of data. You can give it a data frame.
 
 ```{r fig.cap="", fig.show='asis'}
 boxplot(airquality)
 ```
+
+## Boxplots in ggplot
+
+```{r}
+g <- ggplot(airquality, aes(x=as.factor(Month), y=Ozone)) +
+	geom_boxplot()
+g
+```
+To plot the previous plot, we need combine the entire dataframe into two variables.
+
+```{r}
+library(tidyr)
+gathered_data <- gather(airquality)
+g <- ggplot(gathered_data, aes(x=key,y=value)) +
+	geom_boxplot()
+g
+```
+
 
 ## Barplots
 
@@ -572,6 +617,14 @@ barplot(counts, main="Gear and cylinder",
 		legend=rownames(counts),beside=T)
 ```
 
+## Barplot in ggplot
+```{r}
+g <- ggplot(mtcars, aes(x=factor(gear), fill=factor(cyl))) +
+	geom_bar(position=position_dodge())
+g
+```
+
+
 ## Barplots with error bars
 There is no inbuilt way to generate error bars in R. But we have to hack a solution. We will use arrows to generate error bars. The trick is arrows take an argument of `angle`. If you give `angle=90` it will generate an error bar.
 
@@ -598,6 +651,19 @@ for (i in 1:3) { # We will draw the errorbars
 
 ```
 
+## Errorbars in ggplot
+
+```{r}
+sample_data <- data.frame(heights=heights,
+						  sd=stddevs,
+						  names= c("class1","class2","class3"))
+g <- ggplot(sample_data,aes(x=names, y=heights)) +
+				geom_bar(stat="identity") +
+	geom_errorbar(aes(ymin=heights-sd,
+					  ymax=heights+sd, width=0.2))
+g
+```
+
 # Colors in R
 If you have drawn figures in Excel, you might have used colors like this
 
@@ -615,6 +681,17 @@ There are 3 palettes: sequential, quantitative, and contrasting. Now choose a ni
 ```{r fig.cap=""}
 nice<-brewer.pal(3,"Pastel2")
 barplot(counts, main="Gear and cylinder", xlab="Number of gears", col=nice,legend=rownames(counts),beside=T)
+```
+
+## Colors in ggplot
+```{r}
+g <- ggplot(mtcars, aes(x=factor(gear),fill=factor(cyl))) +
+	geom_bar(position=position_dodge()) + 
+	labs(title = "Gear and cylinder", x="Number of gears",
+		 fill="Cylinders") +
+	scale_fill_brewer(palette = "Pastel2")
+	
+print(g)
 ```
 
 # Linear regression and correlation
