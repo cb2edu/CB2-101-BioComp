@@ -77,6 +77,52 @@ java -jar ../GenomeAnalysisTK.jar -I SRR765989.dup.rg.bam -R gatk_ref/chr20.fa -
 # -stand_emit_conf shows error
 java -jar GenomeAnalysisTK.jar  -T HaplotypeCaller -R chr20.fa  -I SRR765989.realigned.bam --genotyping_mode DISCOVERY -stand_call_conf 30 -o raw_variants.vcf
 
+# VQSR
+# VQSR parameters: https://software.broadinstitute.org/gatk/documentation/article.php?id=2805
+# FAQ: https://software.broadinstitute.org/gatk/documentation/article.php?id=1259
+# Methods: https://software.broadinstitute.org/gatk/documentation/article.php?id=39
+
+# VQSR for genomeics Whole genome [*DON"T USE DP FOR EXOME]
+java -jar GenomeAnalysisTK.jar \ 
+    -T VariantRecalibrator \ 
+    -R reference.fa \ 
+    -input raw_variants.vcf \ 
+    -resource:hapmap,known=false,training=true,truth=true,prior=15.0 hapmap.vcf \ 
+    -resource:omni,known=false,training=true,truth=true,prior=12.0 omni.vcf \ 
+    -resource:1000G,known=false,training=true,truth=false,prior=10.0 1000G.vcf \ 
+    -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 dbsnp.vcf \ 
+    -an DP \ 
+    -an QD \ 
+    -an FS \ 
+    -an SOR \ 
+    -an MQ \
+    -an MQRankSum \ 
+    -an ReadPosRankSum \ 
+    -an InbreedingCoeff \
+    -mode SNP \ 
+    -tranche 100.0 -tranche 99.9 -tranche 99.0 -tranche 90.0 \ 
+    -recalFile recalibrate_SNP.recal \ 
+    -tranchesFile recalibrate_SNP.tranches \ 
+    -rscriptFile recalibrate_SNP_plots.R 
+    
+  # INDELS
+     --maxGaussians 4 \
+   -resource:mills,known=false,training=true,truth=true,prior=12.0 Mills_and_1000G_gold_standard.indels.b37.vcf  \
+   -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 dbsnp_138.b37.vcf\
+   -an QD -an DP -an FS -an SOR -an ReadPosRankSum -an MQRankSum -an InbreedingCoeff \
+   -mode INDEL \
+   
+ # Apply recalibration
+ java -jar GenomeAnalysisTK.jar \ 
+    -T ApplyRecalibration \ 
+    -R reference.fa \ 
+    -input raw_variants.vcf \ 
+    -mode SNP \ 
+    --ts_filter_level 99.0 \ 
+    -recalFile recalibrate_SNP.recal \ 
+    -tranchesFile recalibrate_SNP.tranches \ 
+    -o recalibrated_snps_raw_indels.vcf 
+
 # Variant annotation using SNPEFF
 ## Download SNPEFF
 wget -O snpeff.zip https://sourceforge.net/projects/snpeff/files/snpEff_latest_core.zip/download
