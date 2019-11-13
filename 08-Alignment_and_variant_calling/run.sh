@@ -70,12 +70,27 @@ java -jar ../GenomeAnalysisTK.jar -T RealignerTargetCreator -R gatk_ref/chr20.fa
 # Realign
 java -jar ../GenomeAnalysisTK.jar -I SRR765989.dup.rg.bam -R gatk_ref/chr20.fa -T IndelRealigner -targetIntervals SRR765989.paired.bam.list -o SRR765989.realigned.bam
 
+## Base Recalibration
+java -Xmx4g -jar GenomeAnalysisTK.jar -T BaseRecalibrator  -R human/chr20.fa  -I SRR765989.marked.realigned.fixed.bam -knownSites ../dbsnp_138.hg19.vcf -o SRR765989.recal_data.csv
+java -jar GenomeAnalysisTK.jar -T PrintReads -R human/chr20.fa  -I SRR765989.marked.realigned.fixed.bam -BQSR SRR765989.recal_data.csv -o SRR765989.marked.realigned.fixed.recal.bam
+
 # Create vcf
 # Use Haplotypecaller for all cases
 # For options see:
 # https://software.broadinstitute.org/gatk/documentation/article?id=2803
 # -stand_emit_conf shows error
 java -jar GenomeAnalysisTK.jar  -T HaplotypeCaller -R chr20.fa  -I SRR765989.realigned.bam --genotyping_mode DISCOVERY -stand_call_conf 30 -o raw_variants.vcf
+
+# Full Haplotype call for exome sequencing.
+java -jar GenomeAnalysisTK.jar \
+     -R reference.fasta \
+     -T HaplotypeCaller \
+     -I sample1.bam [-I sample2.bam ...] \
+     [--dbsnp dbSNP.vcf] \
+     [-stand_call_conf 30] \
+     [-L targets.interval_list] \
+     -o output.raw.snps.indels.vcf
+
 
 # VQSR
 # VQSR parameters: https://software.broadinstitute.org/gatk/documentation/article.php?id=2805
