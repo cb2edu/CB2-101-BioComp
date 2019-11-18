@@ -93,6 +93,7 @@ Remember, your output will differ from the above shown output. The first line is
 **Note**: You may skip writing a `run.sh` file for this problem.
 
 **Hint:** 
+
 1. If needed, the location of the variation can be extracted from the `"AA change"` column of SwissVar data. For e.g., p.His52Arg means the variation is at the location 52.
 2. Parsing `humsavar.txt" file is tricky. You need to create a clean file like this
 `cat humsavar.txt | tail -n+50 | tr -s " " | tr " " "\t" >clean_humvars.txt`. Make sure you remove the `--` and copyright information too at the end of the file.
