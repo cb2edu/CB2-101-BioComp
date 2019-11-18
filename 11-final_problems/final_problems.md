@@ -6,6 +6,13 @@
 
 # How to submit you answers
 
+<!--
+There are two ways to submit answers:
+
+1. Submit your answer as single `Rmd` file with runnable embedded code.  You should also submit the generated `html` or `PDF` along with the source `.Rmd`. Scripts files should be submitted as `.R` files. Please email your answers to `cb2edu@gmail.com` with CC to `malay@uab.edu`. Write your full name and the string "Info 510 solutions to final problems" in the subject line. Do not send word or any other document types.
+2. Creat a github repository on Github website and send me an email with the link to repository with subject line as instructed above. Create separate directory for each problem.
+-->
+
 **Submit all your answers in plain text files, whenever possible. Exceptions are plots and figures.**
 
 1. First create a directory with your name, then create separate subdirectory for each problem. An `ls()` inside the first directory should return something like this:
@@ -56,21 +63,23 @@
 
 		tar -cvzf malay.tar.gz malay/
 ```
-8. Send the tar ball to <cb2edu@gmail.com>.
+8. Please email your answers to `cb2edu@gmail.com` with CC to `malay@uab.edu`. Write your full name and the string "CB2-101 solutions to final problems" in the subject line.
 
 
 
 # Problem 1
-The PFAM domain distribution for human proteome can be found at <ftp://ftp.sanger.ac.uk/pub/databases/Pfam/releases/Pfam27.0/proteomes/9606.tsv.gz>. The first column of this file is the protein accession number. The location of the domain hit for each gene is given by the columns 2-5. Columns 2-3 are alignment start and end. Columns 4-5 are envelope start and end. Envelopes are generally considered the location of a domain on a gene. Write a R scrpt that takes 9606.tsv.gz file as a first argument, a protein accession number as a second argument, and a location (integer) as a third argument. The program should print the domain name (hmm_name), if the location falls within a domain for a given protein accession. The program should return nothing if the position is outside the boundaries of domains. We should be able to run the
+The PFAM domain distribution for human proteome can be found at <ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/proteomes/9606.tsv.gz>. The first column of this file is the protein accession number. The location of the domain hit for each gene is given by the columns 2-5. Columns 2-3 are alignment start and end. Columns 4-5 are envelope start and end. Envelopes are generally considered the location of a domain on a gene. Write a R scrpt that takes 9606.tsv.gz file as a first argument, a protein accession number as a second argument, and a location (integer) as a third argument. The program should print the domain name (hmm_name), if the location falls within a domain for a given protein accession. The program should return nothing if the position is outside the boundaries of domains. We should be able to run the
 program like this
 
 ```
 		> problem1.R ../data/9606.tsv.gz O95931 20
 		> Chromo
 ```
+<!--
 **Note:** Remember to populate your `run.sh` file in the directory with the command example given above.
+-->
 
-**Hint:** You should create a `list` using the protein accession as key and location start and end as values. You might want to create a nested list or two separate lists.
+**Hint:** You should create a `list` using the protein accession as key and location start and end as values. You might want to create a nested list or two separate lists. 
 
 # Problem 2
 Swissvar is a database of human gene, their variations, and disease associations. The file can be downloaded from here: <ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/variants/humsavar.txt>. The 2nd column of the file is the protein accession numbers. These are the same accession numbers used in the domain file in Problem 1. The 6th column is `dbSNP` and reports the variation at a particular location.  Using these two files, create a sorted list of domains according to the total number of their variations. The domains with higher variations should be on top. The program should not take any argument (files should be read from the data directory) and output the domain list on STDOUT. The output should have two columns, separated by tab: domain name (hmm_name) and a number indicating variation, like this:
@@ -83,8 +92,12 @@ Swissvar is a database of human gene, their variations, and disease associations
 Remember, your output will differ from the above shown output. The first line is the header.
 **Note**: You may skip writing a `run.sh` file for this problem.
 
-**Hint:** The location of the variation can be extracted from the `"AA change"` column of SwissVar data. For e.g., p.His52Arg means the variation is at the location 52.
+**Hint:** 
+1. If needed, the location of the variation can be extracted from the `"AA change"` column of SwissVar data. For e.g., p.His52Arg means the variation is at the location 52.
+2. Parsing `humsavar.txt" file is tricky. You need to create a clean file like this
+`cat humsavar.txt | tail -n+50 | tr -s " " | tr " " "\t" >clean_humvars.txt`. Make sure you remove the `--` and copyright information too at the end of the file.
 
+<!--
 # Problem 3
 Write a program that will generate the abundance of domain in human genome. Use the 9606.tsv.gz file and count the number of times a domain present in a genome. The program should generate the output in descending order, the higher abundant domain should be on top. An example output will be like this:
 
@@ -94,6 +107,12 @@ Write a program that will generate the abundance of domain in human genome. Use 
 		...
 
 **Note:** Your output will vary. The program should not take any argument. You need not write a `run.sh` script for this.
+-->
+
+# Problem 3
+The first column of `humsavar.txt` file contains the gene name and the rest of the columns contains the other information. Using this file (A) list out the top five genes that are mutated in various human disease. (B) plot the frequency distribution of disease variants in human genome across all the genes in the file (C) calculate the average number disease causing mutations across all genes in human genome and mark this number on the previous plot as veritcal red line.   
+
+**Hint:** Remember to skip the information lines in the file and also note that `type of variant` column contains both disease causing and non-disease causing variants.
 
 # Problem 4
 From the Swissvar file in Problem 2, we found the number of variations present in each domain. But this may be due to an artifact of domain abundance in human genome. Highly abundant domains will have higher chance of accumulating variations. We will test this hypothesis using a correlation between the abundance of domain and the accumulated variation. We calculated the abundance of domain in problem 3.
