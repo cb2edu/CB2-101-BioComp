@@ -1,0 +1,29 @@
+---
+title: 'CB2-101: Introduction to Linux'
+author: "Malay K Basu (malay@uab.edu)"
+date: "`r format(Sys.time(), '%Y/%m/%d')`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+---
+
+# Common troubleshooting of virtualbox installation
+
+## Mac issues
+
+If you have never installed virtualbox on your Mac, you need to be careful about the permission issue. During installation, a request for permission will come up. If you have ignored it then you might get a "kernel" error discussed here: https://www.howtogeek.com/658047/how-to-fix-virtualboxs-%E2%80%9Ckernel-driver-not-installed-rc-1908-error/
+
+If you get this error, try to reinstall virtuabox; this time be careful not to ignore the warning. 
+
+If that fails then the only way you can install virtualbox is to diable SIP before you install Virtualbox. Use the video here: https://www.youtube.com/watch?v=IYpMtnhqZZQ
+
+After you disable SIP, reboot and install virtualbox as usual. If you want you can reenable SIP, then use the commad `csrutil enable`.
+
+## Windows issue
+You get a blank screen or an error message pops us telling that VT-X not enabled, or when you try to create a new virtual machine there is no 64 bit option. 
+
+All the above issues are because your laptop vendor (mostly Lenovo and Asus) decided, with great wisdom, to swith off virtualization feature in you laptop. You need to go into bios to enable this. Follow instructions in one of the following webpages:
+
+- https://superuser.com/questions/866962/why-does-virtualbox-only-have-32-bit-option-no-64-bit-option-on-windows-7
+- https://forums.lenovo.com/t5/Lenovo-Yoga-Series-Notebooks/Virtual-machine-won-t-work-on-my-yoga-910-using-VirtualBox/td-p/3678825
+- https://2nwiki.2n.cz/pages/viewpage.action?pageId=75202968
