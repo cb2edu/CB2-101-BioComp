@@ -109,7 +109,7 @@ Here the output or STDOUT of `ls` is "piped" into `STDIN` of `wc`. The final res
 If you would like to redirect the output of a program to a file. This can be done in two ways:
 
 1. `>` creates a new file. Caution: it will overwrite without any warning
-2. '>>' Appends to the existing file. 
+2. `>>` Appends to the existing file. 
 
 For e.g.,
 
@@ -133,8 +133,13 @@ You can even do both redirections simultaneously:
 # `cat`
 `cat` dumps the content of the file to output.
 
-# `more`
-`more` is a paginator. It shows an input page by page.
+# `less`
+`more` is a paginator. It shows an input page by page. The following key commands are useful.
+
+- `/` - Search for pattern. `n` for next match. `N` for previous match.
+- `G` - Go to the end of file.
+- `g` - Go to the start of file.
+- `q` - exit
 
 
 # `wc`
