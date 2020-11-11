@@ -113,7 +113,7 @@ Re-write the function `multiply_it`, where `y` is set with a **default** value o
 
 Download this tab-delimited .txt file https://github.com/cb2edu/CB2-101-BioComp/raw/2020/02-Introduction_to_R/iris.txt) and save it in your project’s data folder.
 ```{r}
-
+download.file("https://github.com/cb2edu/CB2-101-BioComp/raw/2020/02-Introduction_to_R/iris.txt",destfile = "iris.txt")
 ```
 
 Read it in to R using read.table() and store it as the variable `iris`, keeping in mind that: 
