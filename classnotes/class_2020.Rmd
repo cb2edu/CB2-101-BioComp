@@ -1,0 +1,279 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+```{r}
+x <- 2
+y <- 3
+x
+```
+
+```{r}
+getwd()
+setwd("~")
+ls()
+dir()
+```
+
+```{r}
+install.packages("BiocManager")
+# BiocManager::install("xyz")
+```
+
+# Basic data type in R
+```{r}
+x <- 2
+class(x)
+x <- "A"
+class(x)
+x <- TRUE
+class(x)
+x <- "TRUE"
+class(x)
+```
+# Basic data structures
+
+```{r}
+# Vectors
+x <- c(1,2,3)
+class(x)
+x <- c(1:100)
+x <- c(1, "A", 2, 3)
+x <- c(1:100)
+x <- seq(1, 100, by=2)
+x <- vector()
+x[3:5]
+x[0]
+# List
+x
+l <- list()
+l[[1]] <- x
+l[[2]] <- "A"
+str(l)
+
+length(x)
+length(l)
+
+x[1] <- 1000
+x
+l[[1]] <- 1000
+l
+
+f <- factor (c("yes", "no", "yes", "no"))
+class(f)
+f
+table(f)
+
+```
+```{r}
+
+x
+mean(x)
+x <- c(1, 2, 3, 4, NA)
+mean(x)
+is.na(x)
+!is.na(x)
+mean(x[!is.na(x)])
+```
+
+# Data frame
+
+```{r}
+data("iris")
+View(iris)
+dim(iris)
+head(iris, n = 10 )
+colnames(iris)
+rownames(iris)
+
+dim(iris)[1]
+nrow(iris)
+
+dim(iris)[2]
+ncol(iris)
+
+x <- c(1:10)
+y <- c(1:10)
+
+test_df <- data.frame(col1=x, col2=y)
+
+write.table(test_df,file="test_df.tsv", col.names = TRUE, row.names = F, sep="\t", quote = F)
+
+test_df1 <- read.table("test_df.tsv", sep = "\t", header = T)
+View(test_df1)
+
+test_df$col1
+test_df$col2
+
+test_df[ ,1]
+test_df[ ,2]
+test_df[ 1, ]
+
+l <- list (x = 1, y = 2)
+str(l)
+
+l[[1]]
+l$x
+l[["x"]]
+
+x
+y
+z <- c(x, y)
+
+x <- c("A", "B", "C")
+class(x)
+y <- as.factor(x)
+class(y)
+y
+z <- as.character(y)
+z
+class(z)
+```
+
+# Functions
+
+```{r}
+myfunction <- function(x = "Hello", y="world") {
+  cat (paste(x, y, sep=" "))
+}
+myfunction(y="Malay")
+```
+
+# Logical subsetting
+```{r}
+View(iris)
+
+summary(iris)
+
+iris$Petal.Length[ iris$Species=="setosa" ]
+
+setosa.df <- iris[ iris$Species!="setosa" , ]
+View(setosa.df)
+
+str(iris)
+
+flowers <- split(iris,iris$Species)
+flowers[[1]]
+
+# > 
+# <
+# ==
+# !=
+# >=
+# <=
+
+
+```
+
+# Reordering
+
+```{r}
+first <- c("A","B","C","D","E")
+second <- c("B","D","E","A","C")
+
+o <- order(second)
+#second[4] second[1]
+second <- second[o]
+second
+```
+
+# Looping
+
+```{r}
+#View(iris)
+#i, j, k
+for ( i in 1:(ncol(iris))) {
+  #print(i)
+  if( class(iris[, i]) == "numeric"  ) {
+    print( paste ( 
+      names(iris)[i], 
+      mean(iris[, i], na.rm = T)),
+    )
+  }
+}
+#class(iris[,1]) == "numeric"
+#mean(iris[,2])
+```
+
+# Vectorized operation
+
+```{r}
+# Apply
+#lapply, apply
+
+split_iris <- split(iris, iris$Species)
+str(split_iris)
+
+means <- lapply(split_iris,  function(x) {
+  return(mean(x$Sepal.Length))
+})
+str(means)
+
+clean_data <- iris[, c(1:4)]
+
+apply(clean_data,MARGIN = 2, FUN = mean)
+
+a <- c(1:10)
+a+2
+```
+
+# Scatter plot
+
+```{r}
+plot(iris$Sepal.Length, iris$Petal.Length)
+
+library(ggplot2)
+
+my_theme_change <- function () {
+  theme(plot.title = element_text(size=rel(1.5), 
+                                  hjust = 0.5))  
+}
+ggplot( iris, aes(x=Sepal.Length, y=Petal.Length, colour=Species)) + geom_point() + ggtitle("Iris data") + theme_bw() + my_theme_change()
+```
+# Histogram
+
+```{r}
+ggplot(iris, aes(x=Petal.Length)) + geom_histogram()
+```
+
+# Boxplot
+```{r}
+ggplot(iris, aes(x=Species, y=Petal.Length)) + geom_boxplot()
+
+```
+
+# Barplots
+```{r}
+
+means <- lapply(split_iris,  function(x) {
+  return(mean(x$Sepal.Length))
+})
+names(means)
+unlist(means)
+df_plot <- data.frame(sp=names(means), mean.v=unlist(means))
+df_plot
+
+ggplot(df_plot, aes(x=sp, y=mean.v)) + geom_bar(stat = "identity")
+```
+# Correlation and regression
+
+```{r}
+plot(iris$Petal.Length, iris$Sepal.Length)
+m <- lm(iris$Sepal.Length~iris$Petal.Length) # lm(y~x)
+summary(m)
+{plot(iris$Petal.Length, iris$Sepal.Length)
+abline(m)
+}
+```
+# Correlation
+```{r}
+cor.test(iris$Sepal.Length, iris$Petal.Length,method = "spearman")
+```
+
+
+
+

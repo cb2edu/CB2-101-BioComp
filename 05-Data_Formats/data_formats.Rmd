@@ -1,7 +1,6 @@
 ---
 title: "Biological Data Formats"
 author: "Malay (malay@uab.edu)"
-date: "November 7, 2018"
 output: 
   pdf_document: 
     latex_engine: xelatex
@@ -70,7 +69,8 @@ Annotation is a way to provide extra information over the raw sequence. Some seq
 # Problem 1
 Bert Voglestein in a Science paper published in 2013 (PMID: 23539594) reported a list of Tumor Suppressor genes and Oncogenes. The list is available in the `data` folder as `vogelstein_tsg.txt`. Use the UNIPROT REST API get the protein IDs for the genes. 
 
-http://www.uniprot.org/uniprot/?query=organism:9606+AND+gene:BRCA1&format=tab&columns=id,reviewed
+"http://www.uniprot.org/uniprot/?query=organism:9606+AND+gene:BRCA1&format=tab&columns=id,reviewed"
+
 
 # Problem 2
-Download the Swissprot FASTA file from the UNIPROT website. Write a script to extract the sequences corresponding to the IDs created in Problem 1 from this file. 
+Download the Swissprot FASTA file from the UNIPROT website (ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz). Write a script to extract the sequences corresponding to the IDs created in Problem 1 from this file. 
