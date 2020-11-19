@@ -1,0 +1,448 @@
+---
+title: "Introduction to RNASeq"
+author: "Malay (malay@uab.edu)"
+output:
+  html_notebook:
+    toc: yes
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: yes
+    toc: yes
+  word_document: default
+fontsize: 11pt
+mainfont: Minion Pro
+mathfont: Palatino
+monofont: Fira Mono
+csl: bioinformatics.csl
+sansfont: Myriad Pro
+bibliography: bibliography.bib
+urlcolor: blue
+---
+
+# Introduction
+
+RNASeq is a very vast topic and tons of papers have been and are being written on the topic. The following is just an overview.
+
+Originally the idea was proposed by @Mortazavi2008. Although several modification of the original idea have been developed, the basics did not change. In this handout will use the latest in the RNASeq methodology through the use of software called RSEM [@Li2011]. 
+
+
+
+# Normalization of RNASeq data
+
+People have proposed several methods of normalization of RNASeq data. For a comparison see @Dillies2013. 
+
+# Datasets
+
+Every diffential expression measurment should have biological replicates. For demonstration, we will use only 1 replicate for two biological conditions. But in real life, this should never be used. We will use two small datasets from Illumina Body Map project. These are samples prpared from adrenal gland and brain and only from chromosome 19. 
+
+We will download the dataset first.
+
+```{r engine='bash'}
+wget -q "https://github.com/cb2edu/CB2-101-BioComp/raw/2020/10-RNASeq/data/rnaseq_data.tar.gz"
+```
+
+
+Unzip the file.
+
+```{r engine="bash"}
+tar -xvzf rnaseq_data.tar.gz
+```
+
+
+# Required software
+
+1. Install on Linux the following packages:
+	`openssl` 
+	`openssl-devel`
+	`curl`
+	`curl-devel`
+
+2. It was previously fairly complicated to install bioconductor packages. But if you're using R version 3.5 or above, a package from CRAN can make the process easier. Run in R console:
+
+	install.packages("BiocManager")
+
+Use `BiocManager::install()` function to install R packages.
+
+## STAR
+STAR is a modern fast aligner for RNASeq data to reference genome. 
+
+```{r engine="bash"}
+wget -q https://github.com/alexdobin/STAR/archive/2.5.1b.tar.gz
+tar -xvzf 2.5.1b.tar.gz
+cd STAR-2.5.1b
+make
+```
+
+Put the software in your path
+
+```{r engine="bash", eval=F}
+# setting up bash variable in tricky in R markdown
+echo 'export PATH=$PATH:./STAR-2.5.1b/bin/Linux_x86_64_static' >rvers.env
+source rvers.env
+```
+
+Check than STAR is in your path.
+```{r engine="bash"}
+source rvers.env
+which STAR
+```
+
+
+Prepare the referene genome:
+
+```{r engine="bash"}
+source rvers.env
+mkdir -p hs
+
+# We will run STAR using on one thread.
+#STAR --runThreadN 8 --genomeDir hs --runMode genomeGenerate \
+#   --genomeFastaFiles chr19.fa --sjdbGTFfile human_chr19.gtf
+
+pwd
+ls
+STAR --genomeDir hs --runMode genomeGenerate --genomeFastaFiles rnaseq_data/chr19.fa --sjdbGTFfile rnaseq_data/human_chr19.gtf
+```
+
+Now create the alignment. There is a special option for STAR to create a "transcriptome alignment" that could be fed directly to RSEM.
+
+```{r engine="bash"}
+source rvers.env
+# Use --runThreadN 8 for run parallel with 8 cores.
+STAR  --genomeDir hs --readFilesIn rnaseq_data/adrenal_R1.fq \
+    rnaseq_data/adrenal_R2.fq --quantMode TranscriptomeSAM
+```
+
+Rname the adrenal bam file and run the alignment again for 2nd data.
+
+```{r engine="bash"}
+source rvers.env
+mv Aligned.toTranscriptome.out.bam ad_Aligned.toTranscriptome.out.bam
+STAR  --genomeDir hs --readFilesIn rnaseq_data/brain_R1.fq \
+    rnaseq_data/brain_R2.fq --quantMode TranscriptomeSAM
+```
+
+Move the bam file to correct file.
+
+```{r engine="bash"}
+mv Aligned.toTranscriptome.out.bam br_Aligned.toTranscriptome.out.bam
+```
+
+
+# RSEM
+
+RSEM is a cutting-edge RNASeq analysis package that is an end-to-end solution for differential expression, and simplifies the whole process. It also intriduces a new more robust unit of RNASeq measurement called TPM. 
+
+
+## Installing RSEM
+
+```{r engine='bash',eval=F}
+wget -q http://deweylab.biostat.wisc.edu/rsem/src/rsem-1.2.19.tar.gz
+tar -xvzf rsem-1.2.19.tar.gz
+cd rsem-1.2.19/
+make
+
+# Install ebseq
+#module load R/R-3.1.2
+#make ebseq
+#cd EBSeq/
+#export PATH=$PATH:`pwd`
+```
+
+<!--
+## Install Bowtie
+Download Bowtie from http://sourceforge.net/projects/bowtie-bio/files/bowtie/1.1.1/
+
+-->
+
+Setup path for RSEM.
+
+```{r engine="bash"}
+echo 'export PATH=$PATH:./rsem-1.2.19'>>rvers.env
+source rvers.env
+which rsem-prepare-reference
+```
+
+## Prepare reference 
+
+```{r engine='bash'}
+source rvers.env
+mkdir -p rsem
+rsem-prepare-reference --gtf rnaseq_data/human_chr19.gtf rnaseq_data/chr19.fa rsem/chr19
+```
+
+## Calculate expression directly from STAR output
+
+
+```{r engine='bash'}
+source rvers.env
+rsem-calculate-expression --no-bam-output --paired-end \
+  --bam ad_Aligned.toTranscriptome.out.bam rsem/chr19 adrenal
+  
+rsem-calculate-expression --no-bam-output --paired-end \
+  --bam br_Aligned.toTranscriptome.out.bam rsem/chr19 brain
+  
+```
+
+## Simpler way to estimating expression
+
+```{r engine="bash",eval=F}
+#rsem-prepare-reference --gtf human_chr19.gtf --star --star-path \
+#  ../STAR-2.5.1b/bin/Linux_x86_64_static -p 8 chr19.fa hs/chr19
+#rsem-calculate-expression  --paired-end --star --star-path \
+#  ../STAR-2.5.1b/bin/Linux_x86_64_static/ -p 8 adrenal_R1.fq \
+#  adrenal_R2.fq hs/chr19 adrenal_rsem
+#rsem-calculate-expression  --paired-end --star --star-path \
+#  ../STAR-2.5.1b/bin/Linux_x86_64_static/ -p 8 brain_R1.fq brain_R2.fq \
+#  hs/chr19 brain_rsem
+```
+
+
+## Differential expression
+
+We will create the count table.
+
+```{r engine='bash'}
+source rvers.env
+rsem-generate-data-matrix adrenal.genes.results brain.genes.results \
+  >diff-brain-adrenal.txt
+#rsem-run-ebseq diff-brain-adrenal.txt 1,1 expression.results.txt
+#rsem-control-fdr expression.results.txt 0.05 expression_final.txt
+```
+
+<!--And we have our differentially expressed genes. -->
+
+<!--
+## Volcano plot
+
+Volcano plot is a good way to show the differentially expressed genes. For that we need the p-value for the differentially expressed genes  and the the fold change. Given by "PPEE" and "RealFC" values.
+
+```{r}
+data<-read.table("expression.results.txt")
+plot(log2(data$RealFC),data$PPDE,xlab="Fold change",ylab="P-value")
+```
+-->
+
+In real life we have a more substantial dataset.
+
+```{r}
+download.file("https://github.com/cb2edu/CB2-101-BioComp/raw/2020/10-RNASeq/data/pnas_expression.txt", 
+              destfile = "pnas_expression.txt")
+```
+
+# Heatmap
+
+```{r}
+raw.data <- read.table("./pnas_expression.txt",header=T)
+head(raw.data)
+counts <- raw.data[ , -c(1,ncol(raw.data))]
+rownames(counts) <- raw.data$ensembl_ID
+zero_count <- apply(counts, MARGIN = 1, FUN = sum)
+zero_count <- zero_count > 5
+counts<- counts[zero_count,]
+
+
+library(pheatmap)
+
+# Take a small sample for drawing heatmap
+resampled_counts <- sample(c(1:dim(counts)[1]),size = 1000,replace = F)
+resampled_counts <- counts[resampled_counts,]
+pheatmap(as.matrix(resampled_counts))
+```
+
+
+# EDGER
+
+For EDGER we need a count table data for mutiple sample. The supplied `pnas_expression.txt` is a sample file derived from the paper here: https://www.ncbi.nlm.nih.gov/pubmed/19088194.
+
+```{r eval=FALSE}
+raw.data <- read.table("./pnas_expression.txt",header=T)
+head(raw.data)
+counts <- raw.data[ , -c(1,ncol(raw.data))]
+rownames(counts) <- raw.data$ensembl_ID
+colnames(counts)  <- paste(c(rep("C_R",4),rep("T_R",3)),c(1:4,1:3),sep="")
+
+library(edgeR)
+group <- c(rep("C", 4) , rep("T", 3))
+cds <- DGEList( counts , group = group )
+cds <- calcNormFactors(cds)
+design <- model.matrix(~group)
+y <- estimateDisp(cds, design)
+fit <- glmQLFit(y,design)
+qlf <- glmQLFTest(fit,coef=2)
+topTags(qlf)
+
+
+normalized_edge_r_count <-as.data.frame(cpm(y))
+```
+
+# DESEQ2
+
+```{r cache=TRUE}
+suppressPackageStartupMessages(library(DESeq2))
+counts <- read.table("./pnas_expression.txt",header = T)
+row.names(counts) <- counts$ensembl_ID
+counts <- as.matrix(counts[,-c(1,ncol(counts))])
+counts <- counts[rowSums(counts) != 0,]
+coldata <- data.frame(condition=c(rep("C",4), rep("T",3)))
+row.names(coldata) <- colnames(counts)
+#coldata <- as.matrix(coldata)
+dds <- DESeqDataSetFromMatrix(countData = counts, colData = coldata, design = ~ condition)
+dds <- estimateSizeFactors(dds)
+```
+Get the size factor estimate
+
+```{r cache=TRUE}
+#get the sizefactors
+sizeFactors(dds)
+```
+
+To get the count normalized count table:
+```{r cache=TRUE}
+head(counts(dds, normalized=T))
+```
+
+Now we can run the differential expression analysis.
+
+```{r cache=TRUE}
+dds <- DESeq(dds)
+results <- results(dds)
+results
+```
+
+Sort results based on p-value.
+
+```{r cache=TRUE}
+results<- results[order(results$padj),]
+```
+
+## MA-plot
+```{r cache=TRUE}
+plotMA(results)
+```
+
+## Principal component analysis
+
+```{r cache=TRUE}
+d <- read.table("../data/pnas_expression.txt",header=T)
+rownames(d) <- d$ensembl_ID
+d <- d[,-c(1,9)]
+d <- d+1
+log.d <- log(d)
+
+#We would like to cluster the samples
+# Samples are rows
+log.d.t <- t(log.d)
+
+d.pca <- prcomp(log.d.t)
+
+#head(print(d.pca))
+
+#scree plot
+screeplot(d.pca)
+#plot(d.pca,type="l")
+summary(d.pca)
+
+# Eigenvalues
+d.pca$sdev^2
+
+# Eigenvectors
+d.pca$x
+#biplot(d.pca)
+plot(d.pca$x[,1], d.pca$x[,2],col=coldata$condition, main="PCA",xlab="PC1",ylab="PCA2")
+
+```
+
+
+
+# Adding gene names to the result file
+
+First we convert the DeSeq2 result into a data frame. And throw away insignificant result.
+
+```{r}
+deseq_result <- as.data.frame(results)
+deseq_result <- deseq_result[deseq_result$padj < 0.01, ]
+deseq_result$ensembl_id <- rownames(deseq_result)
+```
+
+We will now add gene names to the result.
+
+```{r}
+if(!require(biomaRt)) BiocManager::install("biomaRt")
+if(!require(dplyr)) BiocManager::install("dplyr")
+if(!require(stringr)) BiocManager::install("stringr")
+ens <- useMart(biomart = 'ENSEMBL_MART_ENSEMBL')
+dataset <- listDatasets(ens)
+dataset %>% filter(str_detect(dataset, "hsapiens"))
+ensemble <- useDataset("hsapiens_gene_ensembl", mart=ens)
+listFilters(ensemble) %>% filter(str_detect(name, "entrez"))
+my_attributes<- c("hgnc_symbol", "entrezgene_id", "ensembl_gene_id")
+my_filter <- "ensembl_gene_id"
+#t2g <- getBM (attributes=c("ensembl_transcript_id", "ensembl_gene_id", "hgnc_symbol"), mart=ensemble, useCache = FALSE)
+annot <- getBM(attributes = my_attributes, filters = my_filter, values=deseq_result$ensembl_id, mart = ensemble, useCache = FALSE)
+
+```
+
+We will now add gene names to the result.
+
+```{r}
+merged_data <- merge(x = deseq_result,y = annot, by.x="ensembl_id", by.y="ensembl_gene_id", all.y=TRUE)
+merged_data <- unique(merged_data)
+```
+
+
+# Gene set enrichment analysis using clusterprofiler
+
+```{r}
+if(!require(clusterProfiler)) BiocManager::install("clusterProfiler")
+#if(!require(ReactomePA)) BiocManager::install("ReactomePA")
+if(!require(org.Hs.eg.db)) BiocManager::install("org.Hs.eg.db")
+if(!require(fgsea)) BiocManager::install("fgsea")
+input_list <- merged_data$log2FoldChange
+names(input_list) <- merged_data$entrezgene_id
+input_list = sort(input_list, decreasing = TRUE)
+
+ego <- enrichGO(merged_data$hgnc_symbol, keyType = "SYMBOL",OrgDb = org.Hs.eg.db)
+dotplot(ego)
+barplot(ego)
+
+
+pathways <- reactomePathways(names(input_list))
+gse <- fgsea(pathways, input_list, maxSize = 500, nperm = 10)
+
+
+top_up <- gse[ES >0][head(order(size,decreasing = TRUE), n=5),pathway]
+top_down <- gse[ES < 0][head(order(pval), n=10),pathway]
+toppaths <- c(top_up, top_down)
+#p<-plotGseaTable(pathways = pathways[top_up], input_list, gse, gseaParam = 0.5)
+plotEnrichment(pathways[["Cell Cycle"]], input_list)
+```
+
+
+<!--
+# Overpresentation
+
+Consider a bag full of marbles (total $N$) containing $K$ green marbles and $(N - K)$ red marbles. If we draw a sample of $n$ from this bag, the probablity of getting exactly $k$ green marble is given by *Hypergeometric distribution*.
+
+$$
+Prob(X=k) = \frac{ {{K}\choose{k}} {{N-K}\choose{n-k} }}{ {{N}\choose{n}} }
+$$
+
+This is exactly the scenario of finding a pathway or gene-ontology hits with differentially expressed gene sets. In this case:
+
+$$
+\begin{aligned} 
+N = \text{total number of genes in the genome} \\
+n = \text{number of differentially expressed genes (degs) with significant p-value} \\
+K = \text{Number of genes in a pathway or ontology} \\
+k = \text{overlap between degs and that pathway} \\
+\end{aligned} 
+$$
+
+To calculate this probability in `R` we need to calcualate the cumulative distribution of $(overlap >= k)$.
+
+```{r eval=FALSE}
+phyper(q=k, m=K, n=N-K, k=n, lower.tail = FALSE)
+```
+-->
+
+# Bibliography
