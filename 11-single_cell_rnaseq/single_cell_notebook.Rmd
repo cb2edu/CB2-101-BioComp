@@ -1,0 +1,293 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Installing Seurat
+
+```{r}
+if(!require(Seurat)) {
+  BiocManager::install("Seurat")
+}
+library(Seurat)
+
+if(!require(slingshot)) {
+  BiocManager::install("slingshot")
+}
+library(slingshot)
+
+if(!require(ggbeeswarm)) {
+  BiocManager::install("ggbeesworm")
+}
+library(ggbeeswarm)
+```
+
+
+# Creating the count table from fastq
+
+For this step you'll be using cell-ranger pipeline. It's not possible to run this with a reasonable dataset in the class with cell-ranger reference files. Follow cell-ranger instruction to install the reference and the software (https://support.10xgenomics.com/single-cell-gene-expression/software/overview/welcome).
+
+Run cell-ranger something like this on your fasta files.
+
+```
+cellranger count --id=$samplename --transcriptome=cell_ranger_ref/refdata-gex-GRCh38-2020-A 
+--fastqs=$fastq_dir_name --sample=$samplename --localcores=8 --localmem=32"
+```
+This will generate a bunch of files. Most important ones are in the `filtered_feature_matrix` directory. There will be 3 files:
+
+1. barcodes.tsv
+2. features.tsv
+3. matrix.mtx
+
+This are files that you'll needfor downstream analysis. If you have more than one samples, you'll run each sample seprately and keep these 3 files from each run.
+
+
+# Datasets
+
+We will use a standard single example dataset provided by 10x genomics for this class. Download this data.
+
+```{r engine='bash'}
+wget -q https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz
+tar -xvzf pbmc3k_filtered_gene_bc_matrices.tar.gz
+```
+
+# Some terminology
+
+`Barcodes` are cells, `features` are genes . All the 3 files together describes a matrix where columns are `barcodes` and rows are `features`. The matrix format is in the form of `rownum colnum value`. 
+
+# Create Seurat object
+
+```{r}
+pbmc_data <- Read10X(data.dir = "filtered_gene_bc_matrices/hg19/")
+pbmc <- CreateSeuratObject( counts = pbmc_data, project = "cb2demo", min.cells = 3, min.features = 200)
+```
+# QC of single-cell data
+
+Single cell analysis is not like typical RNAseq experiments. Only a subset of genes are covered. Also, may cells may be already dead. In this case the number of reads mapping to mitochondrial genes will be higher than the other genes. A list of mitochondrial genes are shown here: https://en.wikipedia.org/wiki/Human_mitochondrial_genetics. All these have names starting with "MT-".
+
+```{r}
+pbmc[["percent.mt"]] <- PercentageFeatureSet(pbmc, pattern="^MT-")
+VlnPlot(pbmc, features="percent.mt")
+```
+Looks like most of cell has less than 5% of mitochondrial DNA coverage.
+
+Number of genes in cell
+
+```{r}
+VlnPlot(pbmc, features="nFeature_RNA")
+
+```
+This is the number of total genes detected in each cells. Look how single-cell experiments deal with only a small percentage of genes.
+
+Total RNA per cell.
+
+```{r}
+VlnPlot(pbmc, features="nCount_RNA")
+
+```
+
+#### Excersize
+
+**How many cells are in the sample?**
+
+```{r}
+dim(pbmc[["RNA"]]@counts)
+```
+
+There are 2700 cells.
+
+
+We will now throw away those cells that do not meet our criteria.
+
+
+```{r}
+pbmc <- subset(pbmc, subset= nFeature_RNA >200 & percent.mt < 5)
+```
+
+**How many cells were thrown out**
+```{r}
+dim(pbmc[["RNA"]]@counts)
+```
+
+# Normalization
+
+```{r}
+pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
+```
+
+# Highly variable features
+
+These are genes that shows high cell-to-cell variability.
+
+```{r}
+pbmc <- FindVariableFeatures(pbmc, selection.method = "vst", nfeatures = 2000)
+top10 <- head(VariableFeatures(pbmc), 10)
+p <- VariableFeaturePlot(pbmc)
+p <- LabelPoints(plot =p, points = top10, repel = T )
+p
+```
+
+
+# Clustering
+
+Clustering of cells is based on PCA.
+
+## Scale the data
+
+```{r}
+all.genes <- rownames(pbmc)
+pbmc <- ScaleData(pbmc, features = all.genes)
+```
+## PCA
+
+```{r}
+pbmc <- RunPCA(pbmc, features= VariableFeatures(pbmc))
+```
+
+Determine how many dimension to keep.
+
+```{r}
+ElbowPlot(pbmc)
+```
+The elbowplot shows after 10 PC there is not variability. So we would keep 10 for this dataset. When in doubt, keep more. Keeping more PCs than needed do not really harm the result.
+
+## Cluster the cell
+
+```{r}
+pbmc <- FindNeighbors(pbmc, dims=1:10)
+pbmc <- FindClusters(pbmc, resolution = 0.5)
+```
+
+The resolution is the parameter that to be played around. The higher the number more the number of clusters. Try to be between 0.2 - 1.
+
+Let's see the distribution of cells in cluster.
+
+```{r}
+table(Idents(pbmc))
+```
+
+There are 9 clusters in this dataset.
+
+
+## UMAP
+
+There are two ways you can visualize the clusters. tSNE and UMAP. UMAP is more advanced and better. Use UMAP always.
+
+```{r}
+pbmc <- RunUMAP(pbmc, dim=1:10)
+DimPlot(pbmc, reduction="umap")
+```
+
+## Find cluster markers
+
+```{r}
+markers <- FindAllMarkers(pbmc)
+```
+
+Print the top 2 markers from each cluster.
+
+```{r}
+library(dplyr)
+markers %>% group_by(cluster) %>% top_n (n=2, wt=avg_logFC)
+```
+
+Identifying which cluster is what type of cells requires marker recognition and has to be done manually by an expert.
+
+
+# Cell trajectory calculation
+
+One of main intention of single-cell experiment is to find the cell lineage; which cell is becomeing one. For this we will use a popular package called slingshot.
+
+```{r}
+library(slingshot)
+library(SummarizedExperiment)
+```
+
+Convert Seurat object to slingshot object.
+
+```{r}
+sc_exp <- as.SingleCellExperiment(pbmc)
+```
+
+We will get the cluster information from Seurat.
+
+```{r}
+colData(sc_exp)$Seurat_clusters <- as.character(pbmc@active.ident)
+```
+
+Run slingshot
+```{r}
+sc_exp <- slingshot(sc_exp, clusterLabels = 'Seurat_clusters')
+```
+
+How many lineages.
+
+```{r}
+slingLineages(sc_exp)
+```
+
+The are 3 lineages.
+
+First plot the original seurat cluster.
+
+```{r}
+DimPlot(pbmc, reduction="umap")
+```
+
+Create a consistent color pallet.
+
+```{r}
+library(scales)
+my_color <- hue_pal()(length(levels(
+            as.factor(sc_exp$Seurat_clusters)
+        )) + 1)[1:9]
+```
+
+Replot the seural plot with new colors.
+
+```{r}
+DimPlot(pbmc, reduction = "umap", label = T, cols=my_color)
+```
+
+
+Plot trajectories.
+
+```{r}
+#library(ggthemes)
+#pallette(my_color)
+#library(RColorBrewer)
+c_list <- as.numeric(sc_exp$Seurat_clusters)
+c_list <- c_list + 1
+
+for (i in 1:length(my_color))  {
+    c_list[c_list == i] <- my_color[i]
+}
+
+{plot(reducedDims(sc_exp)$PCA, col = c_list, pch=16, asp = 1)
+lines(SlingshotDataSet(sc_exp), lwd=2, col="black")}
+```
+
+Plot lineages.
+
+```{r}
+library(tidyr)
+coldata <- as.data.frame(colData(sc_exp))
+
+# extract required data
+tmp <- coldata %>% select(starts_with("slingPseudotime"))
+tmp$Seurat_clusters <- coldata$Seurat_clusters
+
+long_tmp <- gather(tmp,key, value, -Seurat_clusters)
+long_tmp <- sample_frac(long_tmp, 0.2)
+g <- ggplot(long_tmp, aes(x=value, y=key)) +
+    geom_quasirandom(groupOnX = FALSE, aes(colour = factor(Seurat_clusters)), alpha=1) +
+        scale_colour_manual(values = my_color , name = "Clusters") + theme_classic() + theme(text = element_text(size =
+                                                                                  14)) +
+        xlab("Slingshot pseudotime") + ylab("Lineages") +
+        ggtitle(paste0("Cells ordered by Slingshot pseudotime")) +
+    scale_y_discrete(labels=c("1","2","3") )
+g
+```
+
+
+
