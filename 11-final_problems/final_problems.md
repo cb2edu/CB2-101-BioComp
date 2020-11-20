@@ -12,7 +12,7 @@ There are two ways to submit answers:
 1. Submit your answer as single `Rmd` file with runnable embedded code.  You should also submit the generated `html` or `PDF` along with the source `.Rmd`. Scripts files should be submitted as `.R` files. Please email your answers to `cb2edu@gmail.com` with CC to `malay@uab.edu`. Write your full name and the string "Info 510 solutions to final problems" in the subject line. Do not send word or any other document types.
 2. Creat a github repository on Github website and send me an email with the link to repository with subject line as instructed above. Create separate directory for each problem.
 -->
-
+<!--
 **Submit all your answers in plain text files, whenever possible. Exceptions are plots and figures.**
 
 1. First create a directory with your name, then create separate subdirectory for each problem. An `ls()` inside the first directory should return something like this:
@@ -65,7 +65,14 @@ There are two ways to submit answers:
 ```
 8. Please email your answers to `cb2edu@gmail.com` with CC to `malay@uab.edu`. Write your full name and the string "CB2-101 solutions to final problems" in the subject line.
 
+-->
 
+Submit all your answers in `ipynb` or `Rmd` format notebooks. You use
+`github_document` or `html_notebook` when using Rmd file. 
+
+First for the repository on github and then commit you answers in separate
+folders corresponding to each problem. Then create a pull request against the source
+repository from your forked copy.
 
 # Problem 1
 The PFAM domain distribution for human proteome can be found at <ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/proteomes/9606.tsv.gz>. The first column of this file is the protein accession number. The location of the domain hit for each gene is given by the columns 2-5. Columns 2-3 are alignment start and end. Columns 4-5 are envelope start and end. Envelopes are generally considered the location of a domain on a gene. Write a R scrpt that takes 9606.tsv.gz file as a first argument, a protein accession number as a second argument, and a location (integer) as a third argument. The program should print the domain name (hmm_name), if the location falls within a domain for a given protein accession. The program should return nothing if the position is outside the boundaries of domains. We should be able to run the
@@ -82,7 +89,7 @@ program like this
 **Hint:** You should create a `list` using the protein accession as key and location start and end as values. You might want to create a nested list or two separate lists. 
 
 # Problem 2
-Swissvar is a database of human gene, their variations, and disease associations. The file can be downloaded from here: <ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/variants/humsavar.txt>. The 2nd column of the file is the protein accession numbers. These are the same accession numbers used in the domain file in Problem 1. The 6th column is `dbSNP` and reports the variation at a particular location.  Using these two files, create a sorted list of domains according to the total number of their variations. The domains with higher variations should be on top. The program should not take any argument (files should be read from the data directory) and output the domain list on STDOUT. The output should have two columns, separated by tab: domain name (hmm_name) and a number indicating variation, like this:
+Swissvar is a database of human gene, their variations, and disease associations. The file can be downloaded from here: <ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/variants/humsavar.txt>. The 2nd column of the file is the protein accession numbers. These are the same accession numbers used in the domain file in Problem 1. The 6th column is `dbSNP` and reports the variation at a particular location.  Using these two files, create a sorted list of domains according to the total number of their variations. The domains with higher variations should be on top. The program should not take any argument <!--(files should be read from the data directory) -->and output the domain list on STDOUT. The output should have two columns, separated by tab: domain name (hmm_name) and a number indicating variation, like this:
 
 		Domain  Variation
 		BRAC1	150
@@ -95,8 +102,20 @@ Remember, your output will differ from the above shown output. The first line is
 **Hint:** 
 
 1. If needed, the location of the variation can be extracted from the `"AA change"` column of SwissVar data. For e.g., p.His52Arg means the variation is at the location 52.
-2. Parsing `humsavar.txt" file is tricky. You need to create a clean file like this
+2. Parsing `humsavar.txt" file is tricky. You may use the following R code to get a clean data. 
+
+<!--You need to create a clean file like this
 `cat humsavar.txt | tail -n+50 | tr -s " " | tr " " "\t" >clean_humvars.txt`. Make sure you remove the `--` and copyright information too at the end of the file.
+-->
+```r
+r <- read.table(
+"ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/variants/humsavar.txt",
+header = F,
+skip = 49, sep = "", fill = T, 
+stringsAsFactors = F, flush = T, 
+nrows=78710)
+r<- r[, -ncol(r)]
+```
 
 <!--
 # Problem 3
@@ -131,5 +150,8 @@ Use a Rscript to read the files created in problem 3 and 4 (or, a merged file). 
 2. If you have used an intermediate script to merge the two files, then you should modify your RScript accordingly.
 3. Don't forget to create a `run.sh` for this problem.
 4. You can output the plot in a PDF file if you want. The correlation should be done using the R function `cor.test`. The test should be `two.sided` and method can be anything.
+
+# Problem 5
+Use Fermi estimation (Lecture 1) to estimate a quantity starting from very little knowledge. The more creative you are in creating the problem, the more kudos you will get. Describe the question you are trying to answer and how did you derive the answer.
 
 * * * *
