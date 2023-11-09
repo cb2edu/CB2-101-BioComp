@@ -492,7 +492,7 @@ Now extract the accession number yourself.
 
 ## Problem 1 
 
-PFAM is a database of domains. It also provides pre-calculated domains for all proteomes. The current version can be found here \url{ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/proteomes/}. Each file is a proteome identified by its taxonomic ID. Human has the ID 9606. Each of these files is tab-delimited and the 6th column is the domain ID. Download the human proteome file using `wget`. After downloading write just a single line of `bash` to find how many domain types (unique domains) are there in human genome. You may use as many commands, chained in pipes, as you wish.
+PFAM is a database of domains. It also provides pre-calculated domains for all proteomes. The current version can be found here \url{https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/proteomes/}. Each file is a proteome identified by its taxonomic ID. Human has the ID 9606. Each of these files is tab-delimited and the 6th column is the domain ID. Download the human proteome file using `wget`. After downloading write just a single line of `bash` to find how many domain types (unique domains) are there in human genome. You may use as many commands, chained in pipes, as you wish.
 
 ## Problem 2
 
@@ -516,7 +516,7 @@ On NCBI FTP site all the bacterial genomes are present in the directory <ftp://f
 Starting from last directory write a single `bash` command line to count the total number of proteins in all the *Yersinia pestis* strains together. You may chain as many commands as you wish.  
 
 ## Problem 4
-*E. coli* MG1655 is the standard referece strain of *E. coli*. The protein FASTA file for this strain can be downloaded from <ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Bacteria/Escherichia_coli_K_12_substr__MG1655_uid57779/NC_000913.faa>. (a) Using just `bash` commands can you find out what is the average length of protein in this strain? You may use as many commands as you may wish. (b) In the second part of the problem, write your commmands in a bash script such a way that given any fasta file as the option to the script, it can print out the average length of protein in the file.
+*E. coli* MG1655 is the standard referece strain of *E. coli*. The protein FASTA file for this strain can be downloaded from <https://ftp.ncbi.nlm.nih.gov/genomes/archive/old_refseq/Bacteria/Escherichia_coli_K_12_substr__MG1655_uid57779/NC_000913.faa>. (a) Using just `bash` commands can you find out what is the average length of protein in this strain? You may use as many commands as you may wish. (b) In the second part of the problem, write your commmands in a bash script such a way that given any fasta file as the option to the script, it can print out the average length of protein in the file.
 
 \pagebreak
 
