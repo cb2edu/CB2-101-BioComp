@@ -1,6 +1,6 @@
 ---
 title: "Biological Data Formats"
-author: "Malay (malay@uab.edu)"
+author: "Malay (mbasu@kumc.edu)"
 output: 
   pdf_document: 
     latex_engine: xelatex
@@ -23,7 +23,12 @@ The major sources of data are sequences databases:
 # Human Reference Genome
 
 1. Genome Reference Consortium. http://www.ncbi.nlm.nih.gov/projects/genome/assembly/grc/
-2. Gencode (ENSEMBL). http://www.gencodegenes.org/ 
+2. Gencode (ENSEMBL). http://www.gencodegenes.org/
+3. Illumina Igenomes: https://support.illumina.com/sequencing/sequencing_software/igenome.html
+4. GATK specific datasets (GATK resource bundle):
+   https://gatk.broadinstitute.org/hc/en-us/articles/360035890811-Resource-bundle
+5. 10X genomics reference genomes for cell ranger.
+
 
 
 
