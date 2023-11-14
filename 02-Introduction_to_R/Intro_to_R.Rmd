@@ -1,7 +1,6 @@
 ---
 title: 'CB2-101: R introduction'
-author: "Malay (malay@uab.edu)"
-date: "November 5, 2018"
+author: "Malay (mbasu@kumc.edu)"
 output:
   pdf_document:
     fig_height: 3.5
@@ -10,6 +9,8 @@ output:
     number_sections: yes
     toc: yes
     toc_depth: 3
+editor_options: 
+  chunk_output_type: inline
 ---
 
 # History of R
@@ -698,30 +699,99 @@ print(g)
 
 ## Linear regression
 We will use the `women` datasets in R for this example. These is a simple datasets with "weight" and "height" of women in the US.
+
 ```{r fig.cap=""}
 data(women)
 head(women)
 ```
+
 If we plot a simple scatterplot of this data, we will see there is an obvious correlation between this two variables.
+
 ```{r fig.cap=""}
 plot(women)
 ```
+
 Let's do a linear regression between this two variables.
+
 ```{r fig.cap=""}
 l <- lm(women$weight~women$height)
 summary(l)
 ```
+
 You can safely ignore the `(Intercept)` line. But the adjusted r^2^ is 0.99 with P-value 1.1e-14, which is highly significant. Let's put the regression line on the plot.
+
 ```{r fig.cap=""}
 plot(women$height,women$weight,main="Women height vs weight",xlab="Height",ylab="Weight")
 abline(l,lwd=2,col="red")
 ```
+
 You can extract the P-value and the r^2^ values for printing
+
 ```{r fig.cap=""}
 s<-summary(l)
 s$adj.r.squared
 s$coefficients[2,4]
 ```
+
+### Residuals
+
+One way to find out whether a linear model is a correct fit or not is to actually plot the residuals.
+
+```{r}
+res <- resid(l)
+fit <- fitted(l)
+
+plot(fit, res, pch=19)
+abline (0,0, col="red")
+```
+**Homoscedasticiy** is when residuals are equally distributed above and below the horizontal line. **Heteroscedasticity** is there is a bias. For this time looks like scedasticity is pretty good.
+
+The other thing you should check is the whether the residuals are distributed normally.
+
+```{r}
+hist (res)
+```
+
+In this case it fit does not look very good. However, our dataset is pretty small. The normality checking should be reliable only for larger dataset.
+
+## Generalized linear model
+
+The test for comparing means between two groups is `t.test`. The test for comparing means among two or more groups is `anova`. And we have already seen linear regression. All these are just subclasses of *Generalized Linear Model*. We will not discuss this in details in this course. However, just to show that are all the same see the following code.
+
+First we will do the t.test using iris dataset. 
+
+```{r}
+data("iris")
+iris$Species <- as.character(iris$Species)
+two_species_iris <- iris[iris$Species == "setosa" | iris$Species=="virginica",]
+```
+
+
+```{r}
+t.test(Petal.Length~Species, data=two_species_iris)
+```
+
+Note the p-vale above.
+
+```{r}
+summary(aov(Petal.Length~Species, data=two_species_iris))
+```
+
+P-value is exactly the same.
+
+```{r}
+summary(lm(Petal.Length~Species,data=two_species_iris))
+```
+
+A through introduction to GLM is beyond the scope of of this course. But to show that regression is just and variation of GLM we can use `glm` function instead of `lm`:
+
+```{r}
+summary(glm(women$weight~women$height, family = gaussian))
+```
+
+It is identical to the `lm` result found before.
+
+
 ## Correlations
 We can also do a correlation between this two variables
 
