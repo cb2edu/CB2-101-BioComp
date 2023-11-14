@@ -791,6 +791,15 @@ summary(glm(women$weight~women$height, family = gaussian))
 
 It is identical to the `lm` result found before.
 
+### Predict using linear model
+
+```{r}
+petal_model <- lm(Petal.Length~Petal.Width, data = iris)
+summary(petal_model)
+predict(petal_model, data.frame(Petal.Width=c(0.7)))
+```
+
+
 
 ## Correlations
 We can also do a correlation between this two variables
