@@ -64,20 +64,30 @@ Annotation is a way to provide extra information over the raw sequence. Some seq
 2. GFF
 
 	The file format specification can be found here: 		http://useast.ensembl.org/info/website/upload/gff.html?redirect=no
+	
 
 
 # Problem 1
 Bert Voglestein in a Science paper published in 2013 (PMID: 23539594) reported a list of Tumor Suppressor genes and Oncogenes. The list is available in the `data` folder as `vogelstein_tsg.txt`. Use the UNIPROT REST API get the protein IDs for the genes. 
 
-"http://www.uniprot.org/uniprot/?query=organism:9606+AND+gene:BRCA1&format=tab&columns=id,reviewed"
+https://rest.uniprot.org/uniprotkb/search?query=reviewed:true+AND+organism_id:9606+AND+gene:BRCA1&format=tsv&fields=accession,reviewed
+
+Not working: "http://www.uniprot.org/uniprot/?query=organism:9606+AND+gene:BRCA1&format=tab&columns=id,reviewed"
+
+```{r engine='bash'}
+cat 'vogelstein_tsg.txt' |head
+```
+
+Well will not loop through the gene list and get the ids from Uniprot.
 
 ```{r eval=FALSE, engine='bash'}
-for i in `cat vogelstein_tsg.txt`;do  wget -q -O - "http://www.uniprot.org/uniprot/?query=organism:9606+AND+gene:$i&format=tab&columns=id,reviewed";done | grep "reviewed" >reviewed.txt
+for i in `cat vogelstein_tsg.txt`;do  wget -q -O - "https://rest.uniprot.org/uniprotkb/search?query=reviewed:true+AND+organism_id:9606+AND+gene:$i&format=tsv&fields=accession" | grep -v Entry; done >reviewed.txt
 ```
 
 
 # Problem 2
 Download the Swissprot FASTA file from the UNIPROT website (ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz). Write a script to extract the sequences corresponding to the IDs created in Problem 1 from this file. 
+
 ```{r eval=FALSE}
 library(seqinr)
 library(stringr)

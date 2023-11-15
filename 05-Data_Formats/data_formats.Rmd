@@ -74,7 +74,11 @@ Annotation is a way to provide extra information over the raw sequence. Some seq
 # Problem 1
 Bert Voglestein in a Science paper published in 2013 (PMID: 23539594) reported a list of Tumor Suppressor genes and Oncogenes. The list is available in the `data` folder as `vogelstein_tsg.txt`. Use the UNIPROT REST API get the protein IDs for the genes. 
 
-"http://www.uniprot.org/uniprot/?query=organism:9606+AND+gene:BRCA1&format=tab&columns=id,reviewed"
+A stardard from the the API is like this
+
+https://rest.uniprot.org/uniprotkb/search?query=reviewed:true+AND+organism_id:9606+AND+gene:BRCA1&format=tsv&fields=accession,reviewed
+
+The URL needs to be quoted to use with `wget` to avoid `&` and also the first line returned is a header which can be removed using `grep -v Entry`.
 
 
 # Problem 2
