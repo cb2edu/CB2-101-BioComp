@@ -1,9 +1,22 @@
 ---
-title: "RNASeq notebook"
-author: "Malay (mbasu@kumc.edu)"
+title: "Introduction to RNASeq"
+author: "Malay (malay@uab.edu)"
 output:
   html_notebook:
     toc: yes
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: yes
+    toc: yes
+  word_document: default
+fontsize: 11pt
+mainfont: Minion Pro
+mathfont: Palatino
+monofont: Fira Mono
+csl: bioinformatics.csl
+sansfont: Myriad Pro
+bibliography: bibliography.bib
+urlcolor: blue
 ---
 
 # Introduction
@@ -20,7 +33,7 @@ People have proposed several methods of normalization of RNASeq data. For a comp
 
 # Datasets
 
-Every differential expression measurement should have biological replicates. For demonstration, we will use only 1 replicate for two biological conditions. But in real life, this should never be used. We will use two small data sets from Illumina Body Map project. These are samples prepared from adrenal gland and brain and only from chromosome 19. 
+Every diffential expression measurment should have biological replicates. For demonstration, we will use only 1 replicate for two biological conditions. But in real life, this should never be used. We will use two small datasets from Illumina Body Map project. These are samples prpared from adrenal gland and brain and only from chromosome 19. 
 
 We will download the dataset first.
 
@@ -38,15 +51,11 @@ tar -xvzf rnaseq_data.tar.gz
 
 # Required software
 
-1. For Redhat based system, install on Linux the following packages:
+1. Install on Linux the following packages:
 	`openssl` 
 	`openssl-devel`
 	`curl`
 	`curl-devel`
-	
-	For ubuntu based system:
-	`libcurl4-openssl-dev`
-	`libxml2-dev`
 
 2. It was previously fairly complicated to install bioconductor packages. But if you're using R version 3.5 or above, a package from CRAN can make the process easier. Run in R console:
 
@@ -61,14 +70,14 @@ STAR is a modern fast aligner for RNASeq data to reference genome.
 wget -q https://github.com/alexdobin/STAR/archive/2.5.1b.tar.gz
 tar -xvzf 2.5.1b.tar.gz
 cd STAR-2.5.1b
-make STAR
+make
 ```
 
 Put the software in your path
 
 ```{r engine="bash", eval=F}
 # setting up bash variable in tricky in R markdown
-echo 'export PATH=$PATH:./STAR-2.5.1b/source' >rvers.env
+echo 'export PATH=$PATH:./STAR-2.5.1b/bin/Linux_x86_64_static' >rvers.env
 source rvers.env
 ```
 
@@ -76,11 +85,10 @@ Check than STAR is in your path.
 ```{r engine="bash"}
 source rvers.env
 which STAR
-STAR -h
 ```
 
 
-Prepare the reference genome:
+Prepare the referene genome:
 
 ```{r engine="bash"}
 source rvers.env
@@ -104,7 +112,7 @@ STAR  --genomeDir hs --readFilesIn rnaseq_data/adrenal_R1.fq \
     rnaseq_data/adrenal_R2.fq --quantMode TranscriptomeSAM
 ```
 
-Rename the adrenal bam file and run the alignment again for 2nd data.
+Rname the adrenal bam file and run the alignment again for 2nd data.
 
 ```{r engine="bash"}
 source rvers.env
@@ -128,10 +136,9 @@ RSEM is a cutting-edge RNASeq analysis package that is an end-to-end solution fo
 ## Installing RSEM
 
 ```{r engine='bash',eval=F}
-wget -q -O rsem-1.3.3.tar.gz \
-https://github.com/deweylab/RSEM/archive/refs/tags/v1.3.3.tar.gz
-tar -xvzf rsem-1.3.3.tar.gz
-cd rsem-1.3.3/
+wget -q http://deweylab.biostat.wisc.edu/rsem/src/rsem-1.2.19.tar.gz
+tar -xvzf rsem-1.2.19.tar.gz
+cd rsem-1.2.19/
 make
 
 # Install ebseq
@@ -150,7 +157,7 @@ Download Bowtie from http://sourceforge.net/projects/bowtie-bio/files/bowtie/1.1
 Setup path for RSEM.
 
 ```{r engine="bash"}
-echo 'export PATH=$PATH:./rsem-1.3.3'>>rvers.env
+echo 'export PATH=$PATH:./rsem-1.2.19'>>rvers.env
 source rvers.env
 which rsem-prepare-reference
 ```
@@ -239,7 +246,7 @@ library(pheatmap)
 # Take a small sample for drawing heatmap
 resampled_counts <- sample(c(1:dim(counts)[1]),size = 1000,replace = F)
 resampled_counts <- counts[resampled_counts,]
-pheatmap(as.matrix(resampled_counts), scale = "row")
+pheatmap(as.matrix(resampled_counts))
 ```
 
 
@@ -341,7 +348,7 @@ d.pca$sdev^2
 # Eigenvectors
 d.pca$x
 #biplot(d.pca)
-plot(d.pca$x[,1], d.pca$x[,2],col=as.factor(coldata$condition), main="PCA",xlab="PC1",ylab="PCA2")
+plot(d.pca$x[,1], d.pca$x[,2],col=coldata$condition, main="PCA",xlab="PC1",ylab="PCA2")
 
 ```
 
@@ -357,14 +364,12 @@ deseq_result <- deseq_result[deseq_result$padj < 0.01, ]
 deseq_result$ensembl_id <- rownames(deseq_result)
 ```
 
-We will now add gene names to the result. There are many ways to do this. First we will use Ensemble Biomart.
+We will now add gene names to the result.
 
 ```{r}
 if(!require(biomaRt)) BiocManager::install("biomaRt")
 if(!require(dplyr)) BiocManager::install("dplyr")
 if(!require(stringr)) BiocManager::install("stringr")
-
-library(biomaRt)
 ens <- useMart(biomart = 'ENSEMBL_MART_ENSEMBL')
 dataset <- listDatasets(ens)
 dataset %>% filter(str_detect(dataset, "hsapiens"))
@@ -376,20 +381,6 @@ my_filter <- "ensembl_gene_id"
 annot <- getBM(attributes = my_attributes, filters = my_filter, values=deseq_result$ensembl_id, mart = ensemble, useCache = FALSE)
 
 ```
-The second way to do this.
-
-```{r}
-library(AnnotationDbi)
-library(org.Hs.eg.db)
-
-columns(org.Hs.eg.db)
-annot2 <- select(org.Hs.eg.db, keys = deseq_result$ensembl_id, keytype = "ENSEMBL", column = c("SYMBOL","ENTREZID", "ENSEMBL"))
-
-# remove data with NA values
-annot2 <- annot2[complete.cases(annot2), ]
-```
-
-annot as 2102 rows and annot2 has 2072 rows. We will keep the former.
 
 We will now add gene names to the result.
 
@@ -403,43 +394,27 @@ merged_data <- unique(merged_data)
 
 ```{r}
 if(!require(clusterProfiler)) BiocManager::install("clusterProfiler")
-
-#it takes a long time to install ReactomePA
 #if(!require(ReactomePA)) BiocManager::install("ReactomePA")
-
-if(!require(msigdbr)) BiocManager::install("msigdbr")
 if(!require(org.Hs.eg.db)) BiocManager::install("org.Hs.eg.db")
-#if(!require(fgsea)) BiocManager::install("fgsea")
-
+if(!require(fgsea)) BiocManager::install("fgsea")
 input_list <- merged_data$log2FoldChange
 names(input_list) <- merged_data$entrezgene_id
 input_list = sort(input_list, decreasing = TRUE)
 
-# Enrichment analysis
 ego <- enrichGO(merged_data$hgnc_symbol, keyType = "SYMBOL",OrgDb = org.Hs.eg.db)
 dotplot(ego)
 barplot(ego)
 
-# GSEA 
-#pathways <- reactomePathways(names(input_list))
-library(msigdbr)
-msigdbr_show_species()
-curated_genes <- msigdbr(species = "Homo sapiens", category = "C2")
-curated_genes <- curated_genes[, c("gs_name", "entrez_gene")]
 
-#em <- GSEA(input_list, TERM2GENE = curated_genes)
-#head(em)
+pathways <- reactomePathways(names(input_list))
+gse <- fgsea(pathways, input_list, maxSize = 500, nperm = 10)
 
-curated_gene_list <- split(curated_genes$entrez_gene, curated_genes$gs_name)
-gse <- fgsea(curated_gene_list, input_list, maxSize = 500, nperm = 10)
-top_up <- gse[ES >0][head(order(NES,decreasing = TRUE), n=5), pathway]
-top_down <- gse[ES < 0][head(order(NES, decreasing = TRUE), n=5),pathway]
-toppaths <- c(top_up, rev(top_down))
-#pplotGseaTable(pathways = pathways[top_up], input_list, gse, gseaParam = 0.5)
-{pdf("test.pdf", width = 11.5, height = 8)
-plotGseaTable(curated_gene_list[top_down], input_list, gse, gseaParam = 0.5)
-dev.off()}
-#plotEnrichment(pathways[["HALLMARK_APOPTOSIS"]], input_list)
+
+top_up <- gse[ES >0][head(order(size,decreasing = TRUE), n=5),pathway]
+top_down <- gse[ES < 0][head(order(pval), n=10),pathway]
+toppaths <- c(top_up, top_down)
+#p<-plotGseaTable(pathways = pathways[top_up], input_list, gse, gseaParam = 0.5)
+plotEnrichment(pathways[["Cell Cycle"]], input_list)
 ```
 
 
