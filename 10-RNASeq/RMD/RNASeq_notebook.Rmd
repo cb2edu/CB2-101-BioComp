@@ -320,13 +320,24 @@ d <- read.table("../data/pnas_expression.txt",header=T)
 rownames(d) <- d$ensembl_ID
 d <- d[,-c(1,9)]
 d <- d+1
-log.d <- log(d)
+log.d <- log2(d)
+
+# Remove all zero columns
+row_sums <- apply(log.d, MARGIN = 1, FUN = sum)
+log.d <- log.d[row_sums > 0, ]
 
 #We would like to cluster the samples
 # Samples are rows
-log.d.t <- t(log.d)
+log.d.t <- as.data.frame(t(log.d))
 
-d.pca <- prcomp(log.d.t)
+# We cannot scale if the variance is 0
+which(apply(log.d.t, 2, var)==0)
+
+# ENSG00000181690 has zero variance. Remove it.
+log.d.t <- log.d.t[, -which(names(log.d.t)== "ENSG00000181690")]
+
+
+d.pca <- prcomp(log.d.t, scale =T)
 
 #head(print(d.pca))
 
