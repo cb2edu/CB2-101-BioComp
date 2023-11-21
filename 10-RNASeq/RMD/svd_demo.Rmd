@@ -70,7 +70,7 @@ str(svd1)
 d is the diagolar vector. Let's plot the scree plot.
 
 ```{r}
-plot( svd1$d^2/sum(svd1$d^2), xlab= "Igen vector", ylab="Variance explained")
+plot( svd1$d^2/sum(svd1$d^2), xlab= "Eigenvectors", ylab="Variance explained")
 ```
 
 Let's plot using various number of SVD.
