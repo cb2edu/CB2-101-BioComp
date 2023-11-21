@@ -1,0 +1,111 @@
+---
+title: "Singular Value Decomposition Demo"
+author: "Malay Basu (malaykbasu@gmail.com"
+date: "2023-11-20"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is a demostration of singular value decomposition. Check the talk for the theretical details of the SVD. This demo just shows how the SVD can be used for image compression. 
+
+We need to install imager library to open an image.
+
+```{r}
+ifelse(require(imager), suppressPackageStartupMessages(library(imager)), BiocManager::install("imager"))
+```
+
+Now we will download an image file for our use.
+
+```{r}
+download.file(url = "https://upload.wikimedia.org/wikipedia/commons/6/6f/Editorial_cartoon_depicting_Charles_Darwin_as_an_ape_%281871%29.jpg", destfile = "darwin.jpg", quiet = T)
+```
+
+Here is the image that we will use.
+
+```{r}
+darwin <- load.image("darwin.jpg")
+plot(darwin, axes = F)
+```
+
+
+
+To original image is a mixture of 3 channels. To find a proper variance for the overall image, we will convert it to grayscale first.
+
+```{r}
+darwin_gray <- grayscale(darwin)
+plot(darwin_gray, axes=F)
+```
+
+Check the dimesion of this image.
+
+```{r}
+dim(darwin_gray)
+```
+
+Now we'll save the grascale image as PNG and check the size.
+
+```{r}
+save.image(darwin_gray, "darwin_gray_before_svd.png")
+
+```
+
+Check the file size.
+
+```{r}
+file.info("darwin_gray_before_svd.png")$size/1024^2
+```
+
+
+
+SVD will decompse the image into 3 matrices. The middle diagnoal matrix holds the variance information. We will do an SVD of the image and plot a scree plot.
+
+```{r}
+svd1 <- svd(scale(darwin_gray))
+str(svd1)
+```
+
+d is the diagolar vector. Let's plot the scree plot.
+
+```{r}
+plot( svd1$d^2/sum(svd1$d^2), xlab= "Igen vector", ylab="Variance explained")
+```
+
+Let's plot using various number of SVD.
+
+```{r}
+par(mfrow=c(2,3))
+
+for (i in c(5, 10, 25, 50, 100, length(svd1$d))) {
+    reconstruted <- svd1$u[, 1:i] %*% diag(svd1$d[1:i]) %*% t(svd1$v[, 1:i])
+    plot(as.cimg(reconstruted), axes=F, main=paste("Eigenvectors", i, sep=" "))
+}
+
+```
+
+We can see that approximately 50 eigenvectors can reconstructued the full image.
+
+```{r}
+compressed <- svd1$u[, 1:50] %*% diag(svd1$d[1:50]) %*% t(svd1$v[, 1:50])
+plot(as.cimg(compressed), axes=F)
+```
+
+
+```{r}
+dim(compressed)
+```
+
+Save the file and check the size.
+
+```{r}
+save.image(as.cimg(compressed), "darwin_gray_after_svd.png")
+```
+
+Size of the file.
+```{r}
+file.info("darwin_gray_after_svd.png")$size/1024^2
+
+```
+
